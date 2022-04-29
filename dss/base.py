@@ -3,7 +3,7 @@ import importlib
 import pkgutil
 
 
-class ImplementationFinder:
+class StageBase:
     def __init__(self, package: str, conf: AttrDict):
         package = importlib.import_module(package)
         self._implementations = {}

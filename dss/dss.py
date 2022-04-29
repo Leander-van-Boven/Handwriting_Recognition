@@ -1,11 +1,11 @@
 from attrdict import AttrDict
 
-from .base import ImplementationFinder
+from .base import StageBase
 
 
 def classifier(conf: AttrDict):
-    return ImplementationFinder('dss.classification', conf)
+    return StageBase('dss.classification', conf)
 
 
 def segmenter(conf: AttrDict):
-    return ImplementationFinder('dss.segmentation', conf)
+    return StageBase('dss.segmentation', conf)
