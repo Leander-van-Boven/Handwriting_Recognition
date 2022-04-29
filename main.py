@@ -1,35 +1,56 @@
 import argparse
 
-from dss import classifier as dss_classifier, segmenter as dss_segmenter
+from attrdict import AttrDict
+from yaml import load, CLoader
+
+from dss import classifier_factory as dss_classifier, segmenter_factory as dss_segmenter
 
 
-def dss(args):
-    classifier = dss_classifier(args.conf)
-    segmenter = dss_segmenter(args.conf)
+def handle_dss(args, conf):
+    classifier = dss_classifier(conf)
+    segmenter = dss_segmenter(conf)
+
+    print('Available segmenters:', segmenter.list_implementations())
+    print('Available classifiers:', classifier.list_implementations())
 
 
-def iam(args):
-    pass
+def handle_iam(args, conf):
+    print('IAM not implemented yet')
+
+
+def get_config(args):
+    with args.config as file:
+        return AttrDict(load(file.read(), Loader=CLoader))
 
 
 def parse_args():
     # Create top-level parser
     parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(help='the task to scope to: dss=Dead Sea Scrolls tasks; iam=IAM-dataset task')
+    parser.add_argument('-c', '--config', type=argparse.FileType('r'), default='./config.yaml')
+    subparsers = parser.add_subparsers(
+        dest='cmd', help='the task to scope to: dss=Dead Sea Scrolls tasks; iam=IAM-dataset task')
+    subparsers.required = True
 
     # Create parser for Dead Sea Scrolls task
     parser_dss = subparsers.add_parser('dss')
-    # ...arguments
-    parser_dss.set_defaults(func=dss)
+    # ...dss arguments
+    parser_dss.set_defaults(func=handle_dss)
 
     # Create parses for IAM task
     parser_iam = subparsers.add_parser('iam')
-    # ...arguments
-    parser_iam.set_defaults(func=iam)
+    # ...iam arguments
+    parser_iam.set_defaults(func=handle_iam)
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    args.func(args)
+    conf = get_config(args)
+
+    # for debugging purposes
+    print("config:")
+    from pprint import pprint
+    pprint(conf)
+
+    args.func(args, conf)

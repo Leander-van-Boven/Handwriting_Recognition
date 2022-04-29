@@ -3,13 +3,18 @@ import importlib
 import pkgutil
 
 
-class StageBase:
+class FactoryBase:
     def __init__(self, package: str, conf: AttrDict):
-        package = importlib.import_module(package)
-        self._implementations = {}
+        # scope to relevant section in config
         self._conf = conf
         for attr in package.split('.'):
             self._conf = self._conf(attr)
+
+        # get package from its name
+        package = importlib.import_module(package)
+
+        # fill library of implementations
+        self._implementations = {}
         for loader, name, _ in pkgutil.walk_packages(package.__path__):
             full_name = package.__name__ + '.' + name
             self._implementations[name] = importlib.import_module(full_name)

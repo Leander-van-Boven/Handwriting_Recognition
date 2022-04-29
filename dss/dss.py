@@ -1,11 +1,11 @@
 from attrdict import AttrDict
 
-from .base import StageBase
+from .base import FactoryBase
 
 
-def classifier(conf: AttrDict):
-    return StageBase('dss.classification', conf)
+def classifier_factory(conf: AttrDict):
+    return FactoryBase('dss.classification', conf)
 
 
-def segmenter(conf: AttrDict):
-    return StageBase('dss.segmentation', conf)
+def segmenter_factory(conf: AttrDict):
+    return FactoryBase('dss.segmentation', conf)
