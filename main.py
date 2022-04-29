@@ -1,8 +1,11 @@
 import argparse
 
+from dss import classifier as dss_classifier, segmenter as dss_segmenter
+
 
 def dss(args):
-    pass
+    classifier = dss_classifier(args.conf)
+    segmenter = dss_segmenter(args.conf)
 
 
 def iam(args):
