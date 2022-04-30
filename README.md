@@ -19,4 +19,5 @@ In JetBrains PyCharm, run the "DSS Test" configuration.
 - [ ] Add abstract class for classifiers and segmenters, specifying tasks like `train`, `test`, etc.
 - [ ] Figure out how to work with end-to-end solutions, if we will work with one
 - [ ] Add automised data loading and inter-stage data flow
+- [ ] Move `./dss/base.py` to project root, so that it can be used in future IAM implementation
 - [ ] IAM implementation, will it differ from DSS?
