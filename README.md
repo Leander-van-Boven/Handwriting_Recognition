@@ -18,4 +18,5 @@ In JetBrains PyCharm, run the "DSS Test" configuration.
 - [ ] Figure out what is specified in argparse, what in config.yaml, whether we need anything else
 - [ ] Add abstract class for classifiers and segmenters, specifying tasks like `train`, `test`, etc.
 - [ ] Figure out how to work with end-to-end solutions, if we will work with one
+- [ ] Add automised data loading and inter-stage data flow
 - [ ] IAM implementation, will it differ from DSS?
