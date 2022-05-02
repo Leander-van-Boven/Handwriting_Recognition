@@ -54,3 +54,4 @@ if __name__ == '__main__':
     pprint(conf)
 
     args.func(args, conf)
+    # ICE uncomment this: print("Final performance: {} %".format(100))
