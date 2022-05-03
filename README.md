@@ -21,3 +21,4 @@ In JetBrains PyCharm, run the "DSS Test" configuration.
 - [ ] Add automised data loading and inter-stage data flow
 - [ ] Move `./dss/base.py` to project root, so that it can be used in future IAM implementation
 - [ ] IAM implementation, will it differ from DSS?
+- [ ] Add Keras Tensorflow and OpenCV to project dependencies
