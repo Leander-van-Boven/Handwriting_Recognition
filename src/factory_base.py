@@ -8,7 +8,8 @@ class FactoryBase:
         # scope to relevant section in config
         self._conf = conf
         for attr in package.split('.'):
-            self._conf = self._conf(attr)
+            if attr != 'src':
+                self._conf = self._conf(attr)
 
         # get package from its name
         package = importlib.import_module(package)
@@ -20,9 +21,18 @@ class FactoryBase:
             self._implementations[name] = importlib.import_module(full_name)
 
     def list_implementations(self):
+        """List all available implementations for this factory.
+
+        :return: List of all available implementations
+        """
         return list(self._implementations.keys())
 
     def get_implementation(self, key):
+        """Gets an implementation by its name. Throws RuntimeError if implementation is not available.
+
+        :param key: The name of the desired implementation
+        :return: The desired implementation
+        """
         if key not in self._implementations:
             raise RuntimeError(f'Could not find a module named {key}')
         mod = self._implementations[key]
