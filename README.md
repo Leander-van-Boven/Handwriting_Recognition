@@ -1,5 +1,5 @@
 # Handwriting Recognition 2022 Group project
-Group 8.
+Group 6.
 
 ## Preliminaries
 We assume a Linux environment with Python (3.8), Pipenv and Git installed.
