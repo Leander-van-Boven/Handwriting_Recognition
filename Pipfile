@@ -11,6 +11,8 @@ keras = "==2.8.0"
 opencv-python = "==4.5.5.64"
 tensorflow = "==2.8.0"
 jupyter = "*"
+numpy = "==1.22.3"
+peakdetect = "==1.1"
 
 [dev-packages]
 
