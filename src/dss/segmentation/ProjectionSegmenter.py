@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import List
+from typing import List, Tuple
 
 import cv2 as cv
 import numpy as np
@@ -8,6 +8,8 @@ from peakdetect import peakdetect
 
 @dataclass
 class ConnectedComponent:
+    """A dataclass that contains all information for one connected component in an image.
+    """
     x: int
     y: int
     w: int
@@ -19,6 +21,9 @@ class ConnectedComponent:
 
 @dataclass
 class LineSegment:
+    """A dataclass that contains information necessary to put a line segment and its containing connected components
+    back into the originating image.
+    """
     top: ConnectedComponent
     bot: ConnectedComponent
     left: ConnectedComponent
@@ -30,7 +35,15 @@ class LineSegment:
     components: List[ConnectedComponent]
 
 
-def get_line_image_from_ccs(image, ccs_line):
+def get_line_image_from_ccs(image: np.ndarray, ccs_line: List[ConnectedComponent]) -> np.array:
+    """Given an image and a list of connected components, get a slice of the image that only contains the given
+    connected components.
+
+    :rtype: np.ndarray
+    :param image: The source image.
+    :param ccs_line: The connected components to slice with
+    :return: A slice of the source image containing only the given connected components
+    """
     topmost_cc = ccs_line[np.argmin([cc.y for cc in ccs_line])]
     bottommost_cc = ccs_line[np.argmax([cc.y + cc.h for cc in ccs_line])]
     leftmost_cc = ccs_line[np.argmin([cc.x for cc in ccs_line])]
@@ -40,10 +53,8 @@ def get_line_image_from_ccs(image, ccs_line):
     line_image = np.zeros((height, width))
     x_offset = leftmost_cc.x
     y_offset = topmost_cc.y
-    data = LineSegment(
-        topmost_cc, bottommost_cc, leftmost_cc, rightmost_cc, x_offset,
-        y_offset, width, height, ccs_line
-    )
+    data = LineSegment(topmost_cc, bottommost_cc, leftmost_cc, rightmost_cc, x_offset, y_offset, width, height, ccs_line
+                       )
     for cc in ccs_line:
         y_l = cc.y - y_offset
         x_l = cc.x - x_offset
@@ -52,7 +63,16 @@ def get_line_image_from_ccs(image, ccs_line):
     return line_image, data
 
 
-def get_ccs_per_line(ccs, minima, image_height):
+def get_ccs_per_line(ccs: List[ConnectedComponent], minima: List[List[int]], image_height: int) \
+        -> List[List[ConnectedComponent]]:
+    """Given a list of connected components and a list op minima (formatted as `peakdetect.peakdetect`), order the
+    connected components by the line it is contained within.
+
+    :param ccs: The connected components
+    :param minima: The list of minima (minima[x] = [location, value])
+    :param image_height: The height of the source image used to determine the last line height
+    :return: A list containing all connected components per line
+    """
     ccs_per_line = []
     for i in range(len(minima) + 1):
         curr_line = minima[i][0] if i < len(minima) else image_height
@@ -62,17 +82,33 @@ def get_ccs_per_line(ccs, minima, image_height):
     return ccs_per_line
 
 
-def preprocessed(image):
+def preprocessed(image: np.ndarray) -> np.ndarray:
+    """Return the source image, preprocessed (converted to greyscale and thresholded).
+
+    :param image: The source image
+    :return: The preprocessed source image.
+    """
     result = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     _, result = cv.threshold(result, 127, 255, cv.THRESH_BINARY)
     return result
 
 
-def extract_cc(image, cc):
+def extract_cc(image: np.ndarray, cc: ConnectedComponent) -> np.ndarray:
+    """Get a slice of an image that only contains the part that is contained within a connected component.
+
+    :param image: The source image
+    :param cc: The connected component
+    :return: The image slice
+    """
     return image[cc.y:cc.y + cc.h, cc.x:cc.x + cc.w]
 
 
-def get_ccs_from_image(image):
+def get_ccs_from_image(image: np.ndarray) -> List[ConnectedComponent]:
+    """Get all connected components of an image.
+
+    :param image: The source image
+    :return: The list of connected components
+    """
     _, _, stats, centroids = cv.connectedComponentsWithStats(image)
     return np.array([
         ConnectedComponent(*stat.tolist(), *centroids[i].tolist())
@@ -80,7 +116,16 @@ def get_ccs_from_image(image):
     ])
 
 
-def line_segment_image(input_image, peak_lookahead, cc_min_a, cc_max_a):
+def line_segment_image(input_image: np.ndarray, peak_lookahead: int, cc_min_a: int, cc_max_a: int) \
+        -> Tuple[List[np.ndarray], List[LineSegment]]:
+    """Perform line segmentation on an image, using the reduction method.
+
+    :param input_image: The source image.
+    :param peak_lookahead: Lookahead used by the peak detection algorithm
+    :param cc_min_a: The minimum area of the connected components to use
+    :param cc_max_a: The maximum area of the connected components to use
+    :return: The line images and the metadata of the line segments
+    """
     image = preprocessed(input_image)
     ccs = get_ccs_from_image(image)
     ccs = [cc for cc in ccs if cc_min_a <= cc.a <= cc_max_a]
