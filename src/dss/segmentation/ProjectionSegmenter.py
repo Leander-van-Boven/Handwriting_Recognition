@@ -1,5 +1,5 @@
 from dataclasses import dataclass, asdict
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import cv2 as cv
 import numpy as np
@@ -35,7 +35,7 @@ class LineSegment:
     components: List[ConnectedComponent]
 
 
-def get_line_image_from_ccs(image: np.ndarray, ccs_line: List[ConnectedComponent]) -> np.array:
+def get_line_image_from_ccs(image: np.ndarray, ccs_line: List[ConnectedComponent]) -> Tuple[np.ndarray, LineSegment]:
     """Given an image and a list of connected components, get a slice of the image that only contains the given
     connected components.
 
@@ -89,7 +89,7 @@ def preprocessed(image: np.ndarray) -> np.ndarray:
     :return: The preprocessed source image.
     """
     result = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    _, result = cv.threshold(result, 127, 255, cv.THRESH_BINARY)
+    _, result = cv.threshold(result, 127, 255, cv.THRESH_BINARY_INV)
     return result
 
 
@@ -103,21 +103,21 @@ def extract_cc(image: np.ndarray, cc: ConnectedComponent) -> np.ndarray:
     return image[cc.y:cc.y + cc.h, cc.x:cc.x + cc.w]
 
 
-def get_ccs_from_image(image: np.ndarray) -> List[ConnectedComponent]:
+def get_ccs_from_image(image: np.ndarray) -> np.ndarray:
     """Get all connected components of an image.
 
     :param image: The source image
     :return: The list of connected components
     """
     _, _, stats, centroids = cv.connectedComponentsWithStats(image)
-    return np.array([
+    return [
         ConnectedComponent(*stat.tolist(), *centroids[i].tolist())
         for i, stat in enumerate(stats)
-    ])
+    ]
 
 
-def line_segment_image(input_image: np.ndarray, peak_lookahead: int, cc_min_a: int, cc_max_a: int) \
-        -> Tuple[List[np.ndarray], List[LineSegment]]:
+def line_segment_image(input_image: np.ndarray, peak_lookahead: int = 40, cc_min_a: int = 500, cc_max_a: int = 1e5) \
+        -> Tuple[List[np.ndarray], List[Dict[str, Any]]]:
     """Perform line segmentation on an image, using the reduction method.
 
     :param input_image: The source image.
