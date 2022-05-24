@@ -9,20 +9,18 @@ import numpy as np
 
 #%%
 # VARIABLES LEANDER DESKTOP
-# ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
-# ngram_w_idx_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
-# ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
-#
-# character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
+ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
+ngram_w_idx_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
+ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
+
+character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
 
 # VARIABLES LEANDER LAPTOP
-ngram_in_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
-ngram_w_idx_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
-ngram_out_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
-
-character_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
-
-
+# ngram_in_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
+# ngram_w_idx_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
+# ngram_out_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
+#
+# character_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
 
 #%%
 # LOAD DATA
@@ -83,26 +81,6 @@ ngrams_processed = ngrams_processed.sort_values(by=['N', 'Frequencies', 'Names']
 
 #%%
 # CALCULATE PROBABILITY FOR EACH N-GRAM
-def calculate_ngram_probability_old(ngram_row):
-    ngram = ngram_row['Names']
-    n_minus_one_gram = '_'.join(ngram.split('_')[:-1])
-    if ngram_row['N'] == 2:
-        freq_n_minus_one_gram = \
-            (ngrams_processed[
-                (ngrams_processed['N'] == 2) &
-                ([name.startswith(n_minus_one_gram) for name in ngrams_processed['Names']])
-            ]['Frequencies']
-            ).sum()
-    else:
-        freq_n_minus_one_gram = ngrams_processed.apply(
-            lambda row: row['Frequencies']
-                if row['N'] == (ngram_row['N'] - 1) and row['Names'] == n_minus_one_gram
-                else 0,
-            axis=1
-        ).sum()
-
-    print(f'{ngram_row.name} ({ngram_row["N"]}-gram): {ngram_row["Frequencies"]} / {freq_n_minus_one_gram}')
-    return ngram_row['Frequencies'] / freq_n_minus_one_gram
 
 
 def calculate_ngram_probability(ngram_row):
@@ -118,6 +96,7 @@ def calculate_ngram_probability(ngram_row):
 
     # print(f'{ngram_row.name} ({ngram_row["N"]}-gram): {ngram_row["Frequencies"]} / {freq_n_minus_one_gram}')
     return ngram_row['Frequencies'] / freq_n_minus_one_gram
+
 
 ngrams_processed['Probability'] = ngrams_processed.apply(calculate_ngram_probability, axis=1)
 
