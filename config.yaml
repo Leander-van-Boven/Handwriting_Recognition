@@ -1,13 +1,9 @@
 dss:
   segmentation:
-    TestSegmentation:
-      - x: 0
-        y: 3
-      - x: 0
-        y: 2
-  classification:
-    TestClassifier: # Parameters for the TestClassifier class listed in /dss/classification/TestClassifier.py
-      - i: 0
-        j: 2
-      - i: 3
-        j: 2
+    - n_splits: 20
+      line_start_splits: 10
+      start_lookahead: 50
+      chunk_lookahead: 40
+      expected_line_height: 200
+      cc_min_a: 500
+      cc_max_a: 100000

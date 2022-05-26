@@ -25,11 +25,12 @@ class FactoryBase:
 
         :return: List of all available implementations
         """
-        return list(self._implementations.keys())
+        return [k for k, v in self._implementations.items() if hasattr(v, k)]
 
-    def get_implementation(self, key):
+    def get_implementation(self, key, conf_profile=0):
         """Gets an implementation by its name. Throws RuntimeError if implementation is not available.
 
+        :param conf_profile: The configuration profile (index) to use for this implementation
         :param key: The name of the desired implementation
         :return: The desired implementation
         """
@@ -39,4 +40,4 @@ class FactoryBase:
         impl_cls = getattr(mod, key, None)
         if not impl_cls:
             raise RuntimeError(f'Could not find class {key} in module {mod}')
-        return impl_cls(self._conf(key) if key in self._conf else AttrDict({}))
+        return impl_cls(self._conf(key)[conf_profile] if key in self._conf else AttrDict({}))
