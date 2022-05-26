@@ -13,6 +13,7 @@ import json
 # VARIABLES LEANDER DESKTOP
 ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
 ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.json'
+ngram_hebrew_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_hebrew_processed.json'
 
 character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\characters'
 
@@ -153,3 +154,28 @@ n_grams = {
 }
 with open(ngram_out_path, 'w') as f:
     json.dump(n_grams, f)
+
+
+#%%
+# CONVERT N-GRAMS TO HEBREW UNICODES
+from hebrew_unicodes import HebrewUnicodes
+
+#%%
+
+
+#%%
+uni_grams_hebrew = {HebrewUnicodes.name_to_unicode(uni_char): uni_grams[uni_char] for uni_char in uni_grams}
+bi_grams_hebrew = {
+    HebrewUnicodes.name_to_unicode(uni_char): {
+        HebrewUnicodes.name_to_unicode(bi_char): bi_grams[uni_char][bi_char] for bi_char in bi_grams[uni_char]
+    } for uni_char in bi_grams
+}
+
+#%%
+# SAVE HEBREW N-GRAMS
+n_grams_hebrew = {
+    'uni_grams': uni_grams_hebrew,
+    'bi_grams': bi_grams_hebrew
+}
+with open(ngram_hebrew_out_path, 'w') as f:
+    json.dump(n_grams_hebrew, f)
