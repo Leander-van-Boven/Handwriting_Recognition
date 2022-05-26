@@ -4,6 +4,7 @@ from typing import Union
 import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
+from tqdm import tqdm
 
 from src.dss.line_segment import PieceWiseProjectionSegmenter
 
@@ -60,19 +61,18 @@ class DssPipeline:
             eval(stage)(force=True)
 
     def _get_scrolls(self):
-        print('Loading scroll images from disk...')
+        print('\nLoading scroll images from disk...')
         files = list((self.source_dir / 'scrolls').glob('*binarized.jpg'))
-        self.scrolls = [preprocessed(cv.imread(str(file))) for file in files]
+        self.scrolls = [preprocessed(cv.imread(str(file))) for file in tqdm(files)]
         self.scroll_names = [file.name.split('.')[0] for file in files]
 
     def line_segment(self, force=False):
         segmenter = PieceWiseProjectionSegmenter(self.conf.segmentation[0],
                                                  self.store_dir / 'line_segmented')
-        if force or not segmenter.try_load():
-            if self.scrolls is None:
-                self._get_scrolls()
-            print('Performing line segmentation...')
-            segmenter.segment_scrolls(self.scrolls, self.scroll_names)
+        if self.scrolls is None:
+            self._get_scrolls()
+        print('\nPerforming line segmentation...')
+        segmenter.segment_scrolls(self.scrolls, self.scroll_names)
         self.line_images, self.line_image_data = segmenter.get_line_images()
 
     def word_segment(self, force=False):

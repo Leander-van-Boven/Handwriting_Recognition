@@ -9,6 +9,8 @@ from peakdetect import peakdetect
 from functools import partial
 from pathlib import Path
 
+from tqdm import tqdm
+
 
 @dataclass
 class ConnectedComponent:
@@ -272,23 +274,14 @@ class PieceWiseProjectionSegmenter:
             raise Exception('Line images are not available yet')
         return self.all_line_images, self.line_image_names
 
-    def try_load(self):
-        # TODO
-        if self.store_dir.exists():
-            pass
-        else:
-            return False
-        return False
-
     def segment_scrolls(self, images, names):
         if self.store_dir.exists():
             shutil.rmtree(self.store_dir)
         line_ims_per_im = (self.segment_image(im) for im in images)
         self.all_line_images = []
         self.line_image_names = []
-        for i, line_ims in enumerate(line_ims_per_im):
+        for i, line_ims in tqdm(enumerate(line_ims_per_im), total=len(images)):
             curr_im_name = names[i]
-            print(curr_im_name)
             directory = self.store_dir / curr_im_name
             directory.resolve().mkdir(parents=True, exist_ok=True)
             for j, line_im in enumerate(line_ims):
