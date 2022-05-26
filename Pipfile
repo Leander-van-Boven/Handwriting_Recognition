@@ -14,6 +14,8 @@ jupyter = "*"
 numpy = "==1.22.3"
 pandas = "==1.4.2"
 peakdetect = "==1.1"
+tqdm = "==4.64.0"
+ctc-decoder = {editable = true, git = "https://github.com/githubharald/CTCDecoder.git"}
 
 [dev-packages]
 
