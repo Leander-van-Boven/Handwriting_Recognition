@@ -1,28 +1,28 @@
 #%%
 # IMPORTS
 import itertools
+from functools import partial
 import os
 from os.path import exists
 
 import pandas as pd
 import numpy as np
+import json
 
 #%%
 # VARIABLES LEANDER DESKTOP
-# ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
-# ngram_w_idx_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
-# ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
-#
-# character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
+ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
+ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.json'
+ngram_hebrew_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_hebrew_processed.json'
+
+character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\characters'
 
 # VARIABLES LEANDER LAPTOP
-ngram_in_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
-ngram_w_idx_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
-ngram_out_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
-
-character_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
-
-
+# ngram_in_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
+# ngram_w_idx_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_w_idx.csv'
+# ngram_out_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.npy'
+#
+# character_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\characters'
 
 #%%
 # LOAD DATA
@@ -81,53 +81,101 @@ ngrams_processed = ngrams_pd.copy()
 ngrams_processed['N'] = ngrams_processed['Names'].apply(lambda ngram: len(ngram.split('_')))
 ngrams_processed = ngrams_processed.sort_values(by=['N', 'Frequencies', 'Names'], ascending=[True, False, True])
 
-#%%
-# CALCULATE PROBABILITY FOR EACH N-GRAM
-def calculate_ngram_probability_old(ngram_row):
-    ngram = ngram_row['Names']
-    n_minus_one_gram = '_'.join(ngram.split('_')[:-1])
-    if ngram_row['N'] == 2:
-        freq_n_minus_one_gram = \
-            (ngrams_processed[
-                (ngrams_processed['N'] == 2) &
-                ([name.startswith(n_minus_one_gram) for name in ngrams_processed['Names']])
-            ]['Frequencies']
-            ).sum()
-    else:
-        freq_n_minus_one_gram = ngrams_processed.apply(
-            lambda row: row['Frequencies']
-                if row['N'] == (ngram_row['N'] - 1) and row['Names'] == n_minus_one_gram
-                else 0,
-            axis=1
-        ).sum()
-
-    print(f'{ngram_row.name} ({ngram_row["N"]}-gram): {ngram_row["Frequencies"]} / {freq_n_minus_one_gram}')
-    return ngram_row['Frequencies'] / freq_n_minus_one_gram
-
-
-def calculate_ngram_probability(ngram_row):
-    ngram = ngram_row['Names']
-    # obtain the (n-1)-gram of the ngram we are dealing with
-    n_minus_one_gram = '_'.join(ngram.split('_')[:-1])
-    # calculate the frequency of the (n-1)-gram occuring in the corpus
-    # TODO: determine whether to use 'x in y' or 'y.startswith(x)'
-    freq_n_minus_one_gram = ngrams_processed.apply(
-        lambda row: row['Frequencies'] if row['Names'].startswith(n_minus_one_gram) else 0,
-        axis=1
-    ).sum()
-
-    # print(f'{ngram_row.name} ({ngram_row["N"]}-gram): {ngram_row["Frequencies"]} / {freq_n_minus_one_gram}')
-    return ngram_row['Frequencies'] / freq_n_minus_one_gram
-
-ngrams_processed['Probability'] = ngrams_processed.apply(calculate_ngram_probability, axis=1)
-
-# ngrams_processed = pd.DataFrame(columns=['N', 'Names', 'Idx', 'Frequencies', 'Probability'])
-# for n in ngrams:
-#     for permutation in itertools.product(character_dirs, repeat=n):
-#         ngram_str = '_'.join(permutation)
-#         ngram_freq = ngrams_pd[ngrams_pd['Names'] == ngram_str]['Frequencies'].values[0] \
-#             if ngram_str in ngrams_pd['Names'].values \
-#             else 1  # If ngram is not in the dataset, set frequency to 1 (to account for 'unseen' n-grams)
-#         ngrams[ngram_str] = ngram_freq
 
 #%%
+# Initialize uni-grams and bi-grams
+uni_grams = {uni_char: 0 for uni_char in character_dirs}
+bi_grams = {uni_char: {bi_char: 0 for bi_char in character_dirs} for uni_char in character_dirs}
+
+
+#%%
+# Calculate uni-gram and bi-gram frequencies
+
+for i, row in ngrams_processed.iterrows():
+    ngram = row['Names'].split('_')
+    bigram = zip(*[ngram[i:] for i in range(0, 2)])
+    for gram in bigram:
+        uni_grams[gram[0]] += row['Frequencies']
+        bi_grams[gram[0]][gram[1]] += row['Frequencies']
+
+# def create_bigrams(bigrams_processed, ngram_row):
+#     if ngram_row['N'] == 2:
+#         return
+#     ngram = ngram_row['Names'].split('_')
+#     bigrams = zip(*[ngram[i:] for i in range(0, 2)])
+#     bigrams = ['_'.join(bigram) for bigram in bigrams]
+#     for bigram in bigrams:
+#         bigrams_processed[bigram] = bigrams_processed.get(bigram, 0) + ngram_row['Frequencies']
+#
+#
+# bigrams_processed = {}
+# ngrams_processed.apply(partial(create_bigrams, bigrams_processed), axis=1)
+
+
+#%%
+# Calculate uni-gram and bi-gram probabilities
+
+unigrams_sum = sum(uni_grams.values())
+
+for uni_char in uni_grams:
+    uni_grams[uni_char] /= unigrams_sum
+
+    bigrams_sum = sum(bi_grams[uni_char].values())
+    if bigrams_sum == 0:
+        continue
+    for bi_char in bi_grams[uni_char]:
+        bi_grams[uni_char][bi_char] /= bigrams_sum
+
+
+# names = []
+# frequencies = []
+# probabilities = []
+#
+#
+# for bigram in bigrams_processed:
+#     names.append(bigram)
+#     frequencies.append(bigrams_processed[bigram])
+#     unigram = bigram.split('_')[0]
+#     unigram_freq = sum([bigrams_processed[bigram] for bigram in bigrams_processed if bigram.split('_')[0] == unigram])
+#     probabilities.append(bigrams_processed[bigram] / unigram_freq)
+#
+# bigrams_final = pd.DataFrame({'Names': names, 'Frequencies': frequencies, 'Probabilities': probabilities})
+
+
+#%%
+
+# assert bigrams_final[['Kaf' in bigram.split('_')[0] for bigram in bigrams_final['Names']]]['Probabilities'].sum() == 1.0
+
+#%%
+# SAVE PROCESSED N-GRAMS
+n_grams = {
+    'uni_grams': uni_grams,
+    'bi_grams': bi_grams
+}
+with open(ngram_out_path, 'w') as f:
+    json.dump(n_grams, f)
+
+
+#%%
+# CONVERT N-GRAMS TO HEBREW UNICODES
+from hebrew_unicodes import HebrewUnicodes
+
+#%%
+
+
+#%%
+uni_grams_hebrew = {HebrewUnicodes.name_to_unicode(uni_char): uni_grams[uni_char] for uni_char in uni_grams}
+bi_grams_hebrew = {
+    HebrewUnicodes.name_to_unicode(uni_char): {
+        HebrewUnicodes.name_to_unicode(bi_char): bi_grams[uni_char][bi_char] for bi_char in bi_grams[uni_char]
+    } for uni_char in bi_grams
+}
+
+#%%
+# SAVE HEBREW N-GRAMS
+n_grams_hebrew = {
+    'uni_grams': uni_grams_hebrew,
+    'bi_grams': bi_grams_hebrew
+}
+with open(ngram_hebrew_out_path, 'w') as f:
+    json.dump(n_grams_hebrew, f)

@@ -1,3 +1,5 @@
+import json
+import os
 from pathlib import Path
 from typing import Union
 
@@ -5,9 +7,12 @@ import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
 from tqdm import tqdm
+from ctc_decoder import beam_search
 
 from src.dss.line_segment import LineSegmenter
 from src.dss.word_segment import WordSegmenter
+from src.utils.hebrew_unicodes import HebrewUnicodes
+from src.utils.language_models import DSSLanguageModel
 
 
 def preprocessed(image: np.ndarray) -> np.ndarray:
@@ -48,13 +53,25 @@ class DssPipeline:
         self.word_images = None
         self.word_image_data = None
 
+        # classification fields
+        # ...
+
+        # final CTC application fields
+        self.hebrew_characters = [HebrewUnicodes.name_to_unicode(char)
+                                  for char in os.listdir(self.source_dir / 'characters')]
+        with open(self.source_dir / 'ngrams' / 'ngrams_hebrew_processed.json', 'r') as ngrams_file:
+            n_grams = json.load(ngrams_file)
+        self.dss_language_model = DSSLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
+        self.output_hebrew = []
+
     def pipeline(self):
         self.line_segment()
         self.word_segment()
         self.classify_train()
         self.classify_test()
         self.classify()
-        self.ngram_embed()
+        self.ctc()
+        self.output_to_txt_file()
 
     def run_stage_or_full(self, stage: str, force=False):
         self.force_all = force
@@ -94,7 +111,15 @@ class DssPipeline:
         pass
 
     def classify(self, force=False):
-        pass
+        # TODO: set self.predictions to outputs of the CNN repeatedly applied to the line images in a sliding window manner
+        window_application_count = 10  # TODO: calculate this value
+        self.predictions = np.zeros((window_application_count, len(self.hebrew_characters) + 1))
 
-    def ngram_embed(self, force=False):
-        pass
+    def ctc(self, force=False):
+        self.output_hebrew.append(beam_search(self.predictions, self.hebrew_characters, lm=self.dss_language_model))
+
+    def output_to_txt_file(self, force=False):
+        # TODO: check if right-to-left order is correct
+        with open(self.store_dir / 'output.txt', 'w') as output_file:
+            for line in self.output_hebrew:
+                output_file.write(line + '\n')
