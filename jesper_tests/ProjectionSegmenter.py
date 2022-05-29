@@ -5,8 +5,7 @@ import cv2 as cv
 import numpy as np
 from peakdetect import peakdetect
 
-from src.dss.line_segment import ConnectedComponent, get_ccs_from_image, \
-    get_line_image_from_ccs
+from src.utils.imutils import ConnectedComponent, get_ccs_from_image, extract_multiple_ccs
 
 
 def get_ccs_per_line(ccs: List[ConnectedComponent], minima: List[List[int]], image_height: int) \
@@ -44,7 +43,7 @@ def line_segment_image(image: np.ndarray, peak_lookahead: int = 40, cc_min_a: in
     _, minima = peakdetect(reduced, lookahead=peak_lookahead)
     ccs_per_line = get_ccs_per_line(ccs, minima, image.shape[1])
     lines = [
-        get_line_image_from_ccs(image, ccs_line)
+        extract_multiple_ccs(image, ccs_line)
         for ccs_line in ccs_per_line if ccs_line
     ]
     line_images = [line[0] for line in lines]

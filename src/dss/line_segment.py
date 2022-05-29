@@ -1,127 +1,19 @@
 import shutil
-from dataclasses import dataclass
-from typing import Union, List, Tuple
-
-import numpy as np
-import cv2 as cv
-from attrdict import AttrDict
-from peakdetect import peakdetect
 from functools import partial
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Union, List, Tuple, Optional
 
+import cv2 as cv
+import numpy as np
+from attrdict import AttrDict
 from tqdm import tqdm
 
-
-@dataclass
-class ConnectedComponent:
-    """A dataclass that contains all information for one connected component in an image.
-    """
-    x: int
-    y: int
-    w: int
-    h: int
-    a: int
-    cx: float
-    cy: float
-
-
-@dataclass
-class LineSegment:
-    """A dataclass that contains information necessary to put a line segment and its containing connected components
-    back into the originating image.
-    """
-    top: ConnectedComponent
-    bot: ConnectedComponent
-    left: ConnectedComponent
-    right: ConnectedComponent
-    x_offset: int
-    y_offset: int
-    width: int
-    height: int
-    components: List[ConnectedComponent]
-
-
-def get_ccs_from_image(image: np.ndarray) -> List[ConnectedComponent]:
-    """Get all connected components of an image.
-
-    :param image: The source image
-    :return: The list of connected components
-    """
-    _, _, stats, centroids = cv.connectedComponentsWithStats(image)
-    return [
-        ConnectedComponent(*stat.tolist(), *centroids[i].tolist())
-        for i, stat in enumerate(stats)
-    ]
-
-
-def extract_cc(image: np.ndarray, cc: ConnectedComponent) -> np.ndarray:
-    """Get a slice of an image that only contains the part that is contained within a connected component.
-
-    :param image: The source image
-    :param cc: The connected component
-    :return: The image slice
-    """
-    return image[cc.y:cc.y + cc.h, cc.x:cc.x + cc.w]
-
-
-def get_line_image_from_ccs(image: np.ndarray, ccs_line: List[ConnectedComponent]) \
-        -> Union[Tuple[np.ndarray, LineSegment], Tuple[None, None]]:
-    """Given an image and a list of connected components, get a slice of the image that only contains the given
-    connected components.
-
-    :rtype: np.ndarray
-    :param image: The source image.
-    :param ccs_line: The connected components to slice with
-    :return: A slice of the source image containing only the given connected components
-    """
-    # print(ccs_line)
-    if len(ccs_line) == 0:
-        return None, None
-    topmost_cc = ccs_line[np.argmin([cc.y for cc in ccs_line])]
-    bottommost_cc = ccs_line[np.argmax([cc.y + cc.h for cc in ccs_line])]
-    leftmost_cc = ccs_line[np.argmin([cc.x for cc in ccs_line])]
-    rightmost_cc = ccs_line[np.argmax([cc.x + cc.w for cc in ccs_line])]
-    height = bottommost_cc.y + bottommost_cc.h - topmost_cc.y
-    width = rightmost_cc.x + rightmost_cc.w - leftmost_cc.x
-    line_image = np.zeros((height, width), dtype=np.uint8)
-    x_offset = leftmost_cc.x
-    y_offset = topmost_cc.y
-    data = LineSegment(topmost_cc, bottommost_cc, leftmost_cc, rightmost_cc, x_offset, y_offset, width, height, ccs_line
-                       )
-    for cc in ccs_line:
-        y_l = cc.y - y_offset
-        x_l = cc.x - x_offset
-        line_image[y_l:y_l + cc.h, x_l:x_l + cc.w] = \
-            image[cc.y:cc.y + cc.h, cc.x:cc.x + cc.w]
-    return line_image, data
-
-
-def crop(image):
-    coords = cv.findNonZero(image)
-    x, y, w, h = cv.boundingRect(coords)
-    return image[y:y+h, x:x+w], (x, y, w, h)
-
-
-def projection_profile(chunk, window_length=20):
-    reduced = cv.reduce(chunk // 255, 1, cv.REDUCE_SUM, dtype=cv.CV_32S).flatten()
-    kernel = np.ones(window_length) / window_length
-    return np.convolve(reduced, kernel, mode='same')
-
-
-def consecutive(array):
-    return np.split(array, np.where(np.diff(array) != 1)[0] + 1)
-
-
-def valleys_from_profile(profile, lookahead):
-    _, valleys = peakdetect(profile, lookahead=lookahead)
-    if len(valleys) == 0:
-        return []
-    locs, _ = zip(*valleys)
-    return list(locs)
+from src.utils.imutils import projection_profile, valleys_from_profile, crop, get_ccs_from_image, extract_multiple_ccs
 
 
 def annotate_image_with_lines(im, lines):
-    if im.shape[-1] == 1:
+    if len(im.shape) == 3 and im.shape[-1] == 1:
         # Only convert to RGB if we have a grayscale image
         im = cv.cvtColor(im, cv.COLOR_GRAY2RGB)
     for line in lines:
@@ -255,10 +147,10 @@ def image_between_lines(im, line1, line2, ccs, offset):
         ubound = max(fbound, sbound)
         if lbound <= cc.cy <= ubound:
             ccs_line.append(cc)
-    return get_line_image_from_ccs(im, ccs_line)[0]
+    return extract_multiple_ccs(im, ccs_line)
 
 
-class PieceWiseProjectionSegmenter:
+class LineSegmenter:
     def __init__(self, conf: AttrDict, store_dir: Union[Path, str]):
         self._segment = partial(piece_wise_segment, n_splits=conf.n_splits, line_start_splits=conf.line_start_splits,
                                 start_lookahead=conf.start_lookahead, chunk_lookahead=conf.chunk_lookahead,
@@ -266,20 +158,13 @@ class PieceWiseProjectionSegmenter:
         self.cc_min_a = conf.cc_min_a
         self.cc_max_a = conf.cc_max_a
         self.store_dir = Path(store_dir).resolve()
-        self.all_line_images = None
-        self.line_image_names = None
-
-    def get_line_images(self):
-        if self.all_line_images is None:
-            raise Exception('Line images are not available yet')
-        return self.all_line_images, self.line_image_names
 
     def segment_scrolls(self, images, names):
         if self.store_dir.exists():
             shutil.rmtree(self.store_dir)
         line_ims_per_im = (self.segment_image(im) for im in images)
-        self.all_line_images = []
-        self.line_image_names = []
+        all_line_images = []
+        line_image_data = []
         for i, line_ims in tqdm(enumerate(line_ims_per_im), total=len(images)):
             curr_im_name = names[i]
             directory = self.store_dir / curr_im_name
@@ -287,8 +172,9 @@ class PieceWiseProjectionSegmenter:
             for j, line_im in enumerate(line_ims):
                 fn = directory / f'line-{j}.jpg'
                 cv.imwrite(str(fn), line_im)
-                self.all_line_images.append(line_im)
-                self.line_image_names.append(f'{curr_im_name}:{j}')
+                all_line_images.append(line_im)
+                line_image_data.append(SimpleNamespace(name=curr_im_name, line=j))
+        return all_line_images, line_image_data
 
     def segment_image(self, im):
         ccs = get_ccs_from_image(im)

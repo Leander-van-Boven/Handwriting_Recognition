@@ -5,7 +5,7 @@ from pathlib import Path
 from imutils import rotate_bound, rotate
 from peakdetect import peakdetect
 #%%
-p = r".\out\line_segmented\P123-Fg001-R-C01-R01-binarized\line-3.jpg"
+p = r"./out/line_segmented/P123-Fg001-R-C01-R01-binarized/line-3.jpg"
 img = cv.imread(p)
 img = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
 
@@ -27,36 +27,6 @@ def crop(image):
 def consecutive(array):
     return np.split(array, np.where(np.diff(array) != 1)[0]+1)
 
-
-def reduce_optimally(image, axis=0):
-    best_bounds = []
-    best_img = None
-    best_angle = 0
-    best = 0
-    for angle in range(-20, 20, 1):
-        rotated = rotate_bound(image, angle)
-        reduced = cv.reduce(rotated // 255, axis, cv.REDUCE_SUM, dtype=cv.CV_32S).flatten()
-        zeros = np.argwhere(reduced == 0).flatten()
-        cons = consecutive(zeros)
-        bounds = []
-        for con in cons:
-            if len(con) > 20:
-                bounds += [con[0], con[-1]]
-        rotated = cv.cvtColor(rotated, cv.COLOR_GRAY2RGB)
-        for bound in bounds:
-            cv.line(rotated, (bound, 0), (bound, rotated.shape[0]), (0, 255, 0), 2)
-        # fig, (a1, a2) = plt.subplots(2, 1)
-        # a1.imshow(rotated)
-        # a2.plot(reduced)
-        # plt.show()
-        count = len(zeros)
-        if count > best:
-            best = count
-            best_angle = angle
-            best_img = rotated
-            best_bounds = bounds
-    return best_bounds, best_angle, best_img
-
 #%%
 def rotated_line_eq(shape, angle, val):
     y0 = shape[0] // 2
@@ -76,9 +46,30 @@ def with_rotated_lines(image, angle, bounds):
     return image
 
 def test():
+    pim(img)
+    bounds, angle, trimg = reduce_optimally(img)
+    pim(trimg)
+    rotated_img = rotate_bound(img, angle)
+    segments = []
+    for i,bound in enumerate([0] + bounds + [rotated_img.shape[1]]):
+        if i == 0:
+            continue
+        lag = bounds[i-1]
+        segment = rotated_img[..., lag:bound]
+        segment = rotate_bound(segment, -angle)
+        _, segment = cv.threshold(segment, 127, 255, cv.THRESH_BINARY)
+        segment, dims = crop(segment)
+        if cv.countNonZero(segment) > 100:
+            segments.append(segment)
+    for segment in segments:
+        pim(segment)
+
+
+test()
+
+#%%
+def birot():
     bounds, angle, rimg = reduce_optimally(img)
     pim(rimg)
     imgr = with_rotated_lines(img, angle, bounds)
     pim(imgr)
-
-test()
