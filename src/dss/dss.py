@@ -9,7 +9,8 @@ from attrdict import AttrDict
 from tqdm import tqdm
 from ctc_decoder import beam_search
 
-from src.dss.line_segment import PieceWiseProjectionSegmenter
+from src.dss.line_segment import LineSegmenter
+from src.dss.word_segment import WordSegmenter
 from src.utils.hebrew_unicodes import HebrewUnicodes
 from src.utils.language_models import DSSLanguageModel
 
@@ -48,6 +49,10 @@ class DssPipeline:
         self.line_images = None
         self.line_image_data = None
 
+        # word segmentation fields
+        self.word_images = None
+        self.word_image_data = None
+
         # classification fields
         # ...
 
@@ -60,7 +65,7 @@ class DssPipeline:
         self.output_hebrew = []
 
     def pipeline(self):
-        self.line_segment()
+        # self.line_segment()
         self.word_segment()
         self.classify_train()
         self.classify_test()
@@ -84,16 +89,25 @@ class DssPipeline:
         self.scroll_names = [file.name.split('.')[0] for file in files]
 
     def line_segment(self, force=False):
-        segmenter = PieceWiseProjectionSegmenter(self.conf.segmentation[0],
-                                                 self.store_dir / 'line_segmented')
         if self.scrolls is None:
             self._get_scrolls()
+        segmenter = LineSegmenter(self.conf.segmentation.line[0],
+                                  self.store_dir / 'line_segmented')
         print('\nPerforming line segmentation...')
-        segmenter.segment_scrolls(self.scrolls, self.scroll_names)
-        self.line_images, self.line_image_data = segmenter.get_line_images()
+        self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names)
 
     def word_segment(self, force=False):
-        pass
+        segmenter = WordSegmenter(self.conf.segmentation.word[0],
+                                  self.store_dir / 'word_segmented')
+        if segmenter.is_saved_on_disk() and not force:
+            print('\nLoading segmented words from disk...')
+            self.word_images, self.word_image_data = segmenter.load_from_disk()
+        else:
+            if self.line_images is None:
+                self.line_segment()
+            print('\nPerforming word segmentation...')
+            self.word_images, self.word_image_data = \
+                segmenter.segment_line_images(self.line_images, self.line_image_data)
 
     def classify_train(self, force=False):
         pass

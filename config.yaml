@@ -1,9 +1,14 @@
 dss:
   segmentation:
-    - n_splits: 20
-      line_start_splits: 10
-      start_lookahead: 50
-      chunk_lookahead: 40
-      expected_line_height: 200
-      cc_min_a: 500
-      cc_max_a: 100000
+    line:
+      - n_splits: 20
+        line_start_splits: 10
+        start_lookahead: 50
+        chunk_lookahead: 40
+        expected_line_height: 200
+        cc_min_a: 500
+        cc_max_a: 100000
+    word:
+      - max_angle: 20
+        angle_step: 1
+        min_nonzero_px: 100

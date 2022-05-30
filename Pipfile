@@ -17,6 +17,7 @@ peakdetect = "==1.1"
 tqdm = "==4.64.0"
 scikit-image = "==0.19.2"
 albumentations = "==1.1.0"
+imutils = "*"
 matplotlib = "==3.5.2"
 ctc-decoder = {editable = true, git = "https://github.com/githubharald/CTCDecoder.git"}
 
