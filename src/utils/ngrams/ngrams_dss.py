@@ -4,6 +4,7 @@ import itertools
 from functools import partial
 import os
 from os.path import exists
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -11,11 +12,11 @@ import json
 
 #%%
 # VARIABLES LEANDER DESKTOP
-ngram_in_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
-ngram_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_processed.json'
-ngram_hebrew_out_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_hebrew_processed.json'
+ngram_in_path = Path('./data/dss/ngrams/ngrams_raw.csv').resolve()
+ngram_out_path = Path('./data/dss/ngrams/ngrams_processed.json').resolve()
+ngram_hebrew_out_path = Path('./data/dss/ngrams/ngrams_hebrew_processed.json').resolve()
 
-character_path = r'C:\Users\leand\Documents\_Studie\MSc\Jaar_2\4_HWR\Handwriting_Recognition\data\dss\characters'
+character_path = Path('./data/dss/characters').resolve()
 
 # VARIABLES LEANDER LAPTOP
 # ngram_in_path = r'D:\Studie\Msc\Jaar 2\4. HWR\Handwriting_Recognition\data\dss\ngrams\ngrams_raw.csv'
@@ -91,11 +92,13 @@ bi_grams = {uni_char: {bi_char: 0 for bi_char in character_dirs} for uni_char in
 #%%
 # Calculate uni-gram and bi-gram frequencies
 
-for i, row in ngrams_processed.iterrows():
+for _, row in ngrams_processed.iterrows():
     ngram = row['Names'].split('_')
     bigram = zip(*[ngram[i:] for i in range(0, 2)])
-    for gram in bigram:
-        uni_grams[gram[0]] += row['Frequencies']
+    for i, gram in enumerate(bigram):
+        if i == 0:
+            uni_grams[gram[0]] += row['Frequencies']
+        uni_grams[gram[1]] += row['Frequencies']
         bi_grams[gram[0]][gram[1]] += row['Frequencies']
 
 # def create_bigrams(bigrams_processed, ngram_row):
@@ -126,7 +129,7 @@ for uni_char in uni_grams:
     for bi_char in bi_grams[uni_char]:
         bi_grams[uni_char][bi_char] /= bigrams_sum
 
-
+#%%
 # names = []
 # frequencies = []
 # probabilities = []
@@ -158,7 +161,8 @@ with open(ngram_out_path, 'w') as f:
 
 #%%
 # CONVERT N-GRAMS TO HEBREW UNICODES
-from hebrew_unicodes import HebrewUnicodes
+# from ..hebrew_unicodes import HebrewUnicodes  # Doesnt work, you should copy the code over while you run this
+
 
 #%%
 
