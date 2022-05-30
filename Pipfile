@@ -20,6 +20,7 @@ albumentations = "==1.1.0"
 imutils = "*"
 matplotlib = "==3.5.2"
 ctc-decoder = {editable = true, git = "https://github.com/githubharald/CTCDecoder.git"}
+nltk = "*"
 
 [dev-packages]
 
