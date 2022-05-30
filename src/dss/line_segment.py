@@ -164,7 +164,7 @@ class LineSegmenter:
         line_ims_per_im = (self.segment_image(im) for im in images)
         all_line_images = []
         line_image_data = []
-        for i, line_ims in tqdm(enumerate(line_ims_per_im), total=len(images)):
+        for i, line_ims in tqdm(enumerate(line_ims_per_im), total=len(images), desc='Performing line segmentation'):
             curr_im_name = names[i]
             directory = self.store_dir / curr_im_name
             directory.resolve().mkdir(parents=True, exist_ok=True)

@@ -30,6 +30,7 @@ class DssPipeline:
     STAGES = [
         'line_segment',
         'word_segment',
+        'classify_augment',
         'model_train',
         'word_classify',
         'ngram_embed',
@@ -80,12 +81,12 @@ class DssPipeline:
         elif stage not in self.STAGES:
             raise ValueError("Unknown stage")
         else:
-            eval(stage)(force=True)
+            eval('self.' + stage)(force=True)
 
     def _get_scrolls(self):
-        print('\nLoading scroll images from disk...')
         files = list((self.source_dir / 'scrolls').glob('*binarized.jpg'))
-        self.scrolls = [preprocessed(cv.imread(str(file))) for file in tqdm(files)]
+        self.scrolls = [preprocessed(cv.imread(str(file))) for file in
+                        tqdm(files, desc='Loading scroll images from disk')]
         self.scroll_names = [file.name.split('.')[0] for file in files]
 
     def line_segment(self, force=False):
@@ -93,21 +94,21 @@ class DssPipeline:
             self._get_scrolls()
         segmenter = LineSegmenter(self.conf.segmentation.line[0],
                                   self.store_dir / 'line_segmented')
-        print('\nPerforming line segmentation...')
         self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names)
 
     def word_segment(self, force=False):
         segmenter = WordSegmenter(self.conf.segmentation.word[0],
                                   self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and not force:
-            print('\nLoading segmented words from disk...')
             self.word_images, self.word_image_data = segmenter.load_from_disk()
         else:
             if self.line_images is None:
                 self.line_segment()
-            print('\nPerforming word segmentation...')
             self.word_images, self.word_image_data = \
                 segmenter.segment_line_images(self.line_images, self.line_image_data)
+
+    def classify_augment(self, force=False):
+        pass
 
     def classify_train(self, force=False):
         pass
