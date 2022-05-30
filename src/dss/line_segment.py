@@ -44,7 +44,6 @@ def piece_wise_segment(im, n_splits=20, line_start_splits=10, start_lookahead=50
                        expected_line_height=200):
     im, dims = crop(im)
     if cv.countNonZero(im) == 0:
-        print('Empty image!')
         return [], dims
     chunks = to_chunks(im, n_splits)
 
@@ -83,7 +82,7 @@ def piece_wise_segment(im, n_splits=20, line_start_splits=10, start_lookahead=50
             next_y = line_ending_to_closest_valley[line_ending][0] if line_ending in line_ending_to_closest_valley \
                 else line_ending
             line.append(next_y)
-    # End for chunk in chunks
+    # End line traversal
 
     # Add line segment (chunk) size to every line segment
     lines_full = []
@@ -105,7 +104,7 @@ def piece_wise_segment(im, n_splits=20, line_start_splits=10, start_lookahead=50
     line_heights.append(im.shape[0] - line_starts[-1])
     line_heights = np.array(line_heights)
 
-    # Add line starting at the top of im
+    # Add line starting at the top of image
     line_starts.insert(0, 0)
 
     imw = im.shape[1]

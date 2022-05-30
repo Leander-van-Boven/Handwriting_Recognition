@@ -65,7 +65,7 @@ class DssPipeline:
         self.output_hebrew = []
 
     def pipeline(self):
-        self.line_segment()
+        # self.line_segment()
         self.word_segment()
         self.classify_train()
         self.classify_test()
@@ -97,12 +97,17 @@ class DssPipeline:
         self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names)
 
     def word_segment(self, force=False):
-        if self.line_images is None:
-            self.line_segment()
         segmenter = WordSegmenter(self.conf.segmentation.word[0],
                                   self.store_dir / 'word_segmented')
-        print('\nPerforming word segmentation...')
-        self.word_images, self.word_image_data = segmenter.segment_line_images(self.line_images, self.line_image_data)
+        if segmenter.is_saved_on_disk() and not force:
+            print('\nLoading segmented words from disk...')
+            self.word_images, self.word_image_data = segmenter.load_from_disk()
+        else:
+            if self.line_images is None:
+                self.line_segment()
+            print('\nPerforming word segmentation...')
+            self.word_images, self.word_image_data = \
+                segmenter.segment_line_images(self.line_images, self.line_image_data)
 
     def classify_train(self, force=False):
         pass

@@ -65,6 +65,22 @@ class WordSegmenter:
                                 angle_step=conf.angle_step)
         self.store_dir = Path(store_dir)
 
+    def is_saved_on_disk(self):
+        return self.store_dir.exists()
+
+    def load_from_disk(self):
+        all_word_images = []
+        all_word_image_data = []
+        filenames = list(self.store_dir.glob('**/*.jpg'))
+        for fn in tqdm(filenames):
+            word = int(fn.name.split('-')[-1].split('.')[0])
+            line = int(fn.parent.name.split('-')[-1])
+            name = fn.parent.parent.name
+            im = cv.imread(str(fn))
+            all_word_images.append(im)
+            all_word_image_data.append(SimpleNamespace(name=name, line=line, word=word))
+        return all_word_images, all_word_image_data
+
     def segment_line_images(self, images, data):
         if self.store_dir.exists():
             shutil.rmtree(self.store_dir)
