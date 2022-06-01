@@ -34,8 +34,9 @@ class DssPipeline:
         'word_segment',
         'classify_augment',
         'model_train',
-        'word_classify',
-        'ngram_embed',
+        'classify',
+        'ctc',
+        'output_to_txt_file'
     ]
 
     def __init__(self, conf: AttrDict, source_dir: Union[Path, str], store_dir: Union[Path, str]):
