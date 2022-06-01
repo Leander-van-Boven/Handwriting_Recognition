@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 from pathlib import Path
 from typing import Union
 
@@ -10,6 +11,7 @@ from tqdm import tqdm
 from ctc_decoder import beam_search
 
 from src.dss.line_segment import LineSegmenter
+from src.dss.sliding_window import SlidingWindowClassifier
 from src.dss.word_segment import WordSegmenter
 from src.dss.hebrew_unicodes import HebrewUnicodes
 from src.utils.custom_language_model import CustomLanguageModel
@@ -55,7 +57,8 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        # ...
+        self.model = None
+        self.predictions = None
 
         # final CTC application fields
         self.hebrew_characters = [HebrewUnicodes.name_to_unicode(char)
@@ -63,15 +66,9 @@ class DssPipeline:
         with open(self.source_dir / 'ngrams' / 'ngrams_hebrew_processed.json', 'r') as ngrams_file:
             n_grams = json.load(ngrams_file)
         self.dss_language_model = CustomLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
-        self.output_hebrew = []
+        self.words = None
 
     def pipeline(self):
-        # self.line_segment()
-        self.word_segment()
-        self.classify_train()
-        self.classify_test()
-        self.classify()
-        self.ctc()
         self.output_to_txt_file()
 
     def run_stage_or_full(self, stage: str, force=False):
@@ -111,21 +108,50 @@ class DssPipeline:
         pass
 
     def classify_train(self, force=False):
-        pass
+        directory = self.store_dir / 'trained_model'
+        if not force and directory.exists():
+            pass
 
     def classify_test(self, force=False):
         pass
 
     def classify(self, force=False):
-        # TODO: set self.predictions to outputs of the CNN repeatedly applied to the line images in a sliding window manner
-        window_application_count = 10  # TODO: calculate this value
-        self.predictions = np.zeros((window_application_count, len(self.hebrew_characters) + 1))
+        if self.word_images is None:
+            self.word_segment()
+        classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
+                                             self.conf.classification)
+        self.predictions = classifier.classify_all()
 
     def ctc(self, force=False):
-        self.output_hebrew.append(beam_search(self.predictions, self.hebrew_characters, lm=self.dss_language_model))
+        if self.predictions is None:
+            self.classify()
+        self.words = [beam_search(matrix, ''.join(self.hebrew_characters), lm=self.dss_language_model)
+                      for matrix in tqdm(self.predictions, desc='Decoding probability matrices')]
 
     def output_to_txt_file(self, force=False):
         # TODO: check if right-to-left order is correct
-        with open(self.store_dir / 'output.txt', 'w') as output_file:
-            for line in self.output_hebrew:
-                output_file.write(line + '\n')
+        if self.word_image_data is None:
+            self.word_segment()
+        if self.words is None:
+            self.ctc()
+        directory = self.store_dir / 'results'
+        if directory.exists():
+            shutil.rmtree(directory)
+        directory.mkdir()
+
+        library = {}
+        for word, data in tqdm(zip(self.words, self.word_image_data), total=len(self.words), desc='Organizing library'):
+            document = library.get(data.name, {})
+            line = document.get(data.line, {})
+            line[data.word] = word
+            document[data.line] = line
+            library[data.name] = document
+
+        for name, document in tqdm(library.items(), desc='Writing output'):
+            text = '\n'.join([' '.join([word
+                                        for _, word in sorted(line.items())])
+                              for _, line in sorted(document.items())
+                              ])
+            fn = directory / f'{name}.txt'
+            fn.touch()
+            fn.write_text(text, encoding='utf-8')
