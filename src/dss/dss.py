@@ -11,8 +11,8 @@ from ctc_decoder import beam_search
 
 from src.dss.line_segment import LineSegmenter
 from src.dss.word_segment import WordSegmenter
-from src.utils.hebrew_unicodes import HebrewUnicodes
-from src.utils.language_models import DSSLanguageModel
+from src.dss.hebrew_unicodes import HebrewUnicodes
+from src.utils.custom_language_model import CustomLanguageModel
 
 
 def preprocessed(image: np.ndarray) -> np.ndarray:
@@ -62,7 +62,7 @@ class DssPipeline:
                                   for char in os.listdir(self.source_dir / 'characters')]
         with open(self.source_dir / 'ngrams' / 'ngrams_hebrew_processed.json', 'r') as ngrams_file:
             n_grams = json.load(ngrams_file)
-        self.dss_language_model = DSSLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
+        self.dss_language_model = CustomLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
         self.output_hebrew = []
 
     def pipeline(self):
