@@ -29,6 +29,15 @@ def preprocessed(image: np.ndarray) -> np.ndarray:
 
 
 class DssPipeline:
+    # TODO list:
+    # TODO: Create new images for 'blank' character (based on ngram probabilities)
+    # TODO: Change activation function of output layer to softmax
+    # TODO: Retrain model
+    # TODO: Load pretrained model in pipeline
+    # TODO: Use pretrained model in pipeline to make inferences
+
+    # TODO: IAM!!!!!!!!!
+
     STAGES = [
         'line_segment',
         'word_segment',
@@ -149,7 +158,7 @@ class DssPipeline:
             library[data.name] = document
 
         for name, document in tqdm(library.items(), desc='Writing output'):
-            text = '\n'.join([' '.join([word
+            text = '\n'.join([' '.join([word[::-1]  # Reverse the word because of RTL
                                         for _, word in sorted(line.items())])
                               for _, line in sorted(document.items())
                               ])

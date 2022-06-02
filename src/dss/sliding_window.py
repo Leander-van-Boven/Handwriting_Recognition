@@ -27,8 +27,8 @@ class SlidingWindowClassifier:
         ]
         if mod != 0:
             slices.append(np.s_[:, (image_width - window_width):image_width])
-        # TODO: Check if n-grams are RTL or LTR. If the former, uncomment below and add [::-1] do end of ./dss.py:151
-        # slices.reverse()
+        # Reverse slices to account for RTL
+        slices.reverse()
         return resized_im, slices
 
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
