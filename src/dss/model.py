@@ -5,6 +5,8 @@ import PIL
 from tqdm import tqdm
 import numpy as np
 
+from src.dss.model_architecture import get_model, compile_model
+
 image_height = 71
 image_width = 71
 colour_channels = 3
@@ -53,7 +55,9 @@ def read_in_data():
     for letter in tqdm(os.listdir(TRAIN_PATH), desc='Reading in Training Data'):
         #tmp = []
         image_folder = os.path.join(TRAIN_PATH, letter)
-        for im_file in os.listdir(image_folder):
+        for counter, im_file in enumerate(os.listdir(image_folder)):
+            if counter >= 1014:
+                break
             #image = cv2.imread(os.path.join(image_folder, im_file))
             #tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
@@ -101,38 +105,6 @@ def read_in_data():
     # return train_ds, train_labels, test_ds, test_labels, validation_ds, validation_labels
 
 
-def build_model():
-    model = models.Sequential()
-
-    model.add(layers.Conv2D(filters=96, kernel_size=(3, 3), activation=PReLU(), input_shape=input_shape))
-    model.add(layers.MaxPooling2D((3, 3), strides=2))
-    model.add(layers.Conv2D(filters=128, kernel_size=(3, 3), activation=PReLU()))
-    model.add(layers.MaxPooling2D((3, 3), strides=2))
-    model.add(layers.Conv2D(filters=160, kernel_size=(3, 3), activation=PReLU()))
-    model.add(layers.MaxPooling2D((3, 3), strides=2))
-    model.add(layers.Conv2D(filters=256, kernel_size=(3, 3), activation=PReLU()))
-    model.add(layers.Conv2D(filters=256, kernel_size=(3, 3), activation=PReLU()))
-    # model.add(layers.MaxPooling2D((3, 3), strides=2))
-    # model.add(layers.Conv2D(filters=384, kernel_size=(3, 3), activation=PReLU()))
-    # model.add(layers.Conv2D(filters=384, kernel_size=(3, 3), activation=PReLU()))
-    # model.add(layers.MaxPooling2D((3, 3), strides=2))
-    model.add(layers.Flatten())
-    model.add(layers.Dense(1024, activation=PReLU()))
-    # output layer
-    output_layer = layers.Dense(num_classes, activation=PReLU())
-    model.add(output_layer)
-    # model.summary()
-    return model
-
-
-def compile_model(model):
-    model.compile(
-        optimizer='adam',
-        loss=losses.CategoricalCrossentropy(from_logits=True),
-        metrics=['accuracy']
-    )
-
-
 def test_model(model, test_data, test_labels):
     correct = 0
     total = 0
@@ -159,13 +131,13 @@ if __name__ == "__main__":
     train_data, train_labels, test_data, test_labels, validation_data, validation_labels = read_in_data()
 
     print("[INFO] Constructing Model")
-    model = build_model()
+    model = get_model()
     compile_model(model)
 
     print("[INFO] Beginning Model Training")
     cp_callback = callbacks.ModelCheckpoint(filepath=checkpoint_path,
-                    save_weights_only=True,
-                    verbose=1)
+                                            save_weights_only=True,
+                                            verbose=1)
     _ = model.fit(train_data, train_labels, epochs=EPOCHS, callbacks=cp_callback)
 
     print("[INFO] Generating Predictions")

@@ -11,6 +11,7 @@ from tqdm import tqdm
 from ctc_decoder import beam_search
 
 from src.dss.line_segment import LineSegmenter
+from src.dss.model_architecture import get_model
 from src.dss.sliding_window import SlidingWindowClassifier
 from src.dss.word_segment import WordSegmenter
 from src.dss.hebrew_unicodes import HebrewUnicodes
@@ -33,8 +34,6 @@ class DssPipeline:
     # TODO: Create new images for 'blank' character (based on ngram probabilities)
     # TODO: Change activation function of output layer to softmax
     # TODO: Retrain model
-    # TODO: Load pretrained model in pipeline
-    # TODO: Use pretrained model in pipeline to make inferences
 
     # TODO: IAM!!!!!!!!!
 
@@ -67,7 +66,8 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = None
+        self.model = get_model()  # provide argument values if necessary
+        self.model.load_weights('../trained_model/trained_model.ckpt.index')
         self.predictions = None
 
         # final CTC application fields
