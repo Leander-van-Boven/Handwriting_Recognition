@@ -537,7 +537,11 @@ def create_blank_images():
             os.mkdir(blank_path)
 
         for i in tqdm(range(num_blank // 3), desc=f'Generating Blank images for {ds_type}'):
-            char_one = np.random.choice([key for key in uni_grams.keys()], p=[value for value in uni_grams.values()])
+            char_one = None
+            while char_one is None:
+                char_one = np.random.choice([key for key in uni_grams.keys()], p=[value for value in uni_grams.values()])
+                if char_one in ['Kaf-final', 'Nun-final', 'Tsadi-final']:
+                    char_one = None
             char_two = np.random.choice([key for key in bi_grams[char_one].keys()],
                                         p=[value for value in bi_grams[char_one].values()])
 
