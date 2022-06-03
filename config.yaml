@@ -1,4 +1,5 @@
 dss:
+  threshold: 127
   segmentation:
     line:
       - n_splits: 20
@@ -10,8 +11,23 @@ dss:
         cc_max_a: 100000
     word:
       - max_angle: 20
+        min_angle: -20
         angle_step: 1
         min_nonzero_px: 100
+        min_consec: 20
+  classification:
+    window:
+      size: !!python/tuple [71, 40]
+      hop_size: 10
+iam:
+  threshold: 192
+  segmentation:
+    word:
+      - max_angle: 6
+        min_angle: -20
+        angle_step: 2
+        min_nonzero_px: 100
+        min_consec: 28
   classification:
     window:
       size: !!python/tuple [71, 71]

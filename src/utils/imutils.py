@@ -19,6 +19,18 @@ class ConnectedComponent:
     cy: float
 
 
+def preprocessed(image: np.ndarray, threshold: int, ) -> np.ndarray:
+    """Return the source image, preprocessed (converted to greyscale and thresholded).
+
+    :param image: The source image
+    :param threshold: The threshold value for binarization
+    :return: The preprocessed source image.
+    """
+    result = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    _, result = cv.threshold(result, threshold, 255, cv.THRESH_BINARY_INV)
+    return result
+
+
 def crop(image):
     coords = cv.findNonZero(image)
     x, y, w, h = cv.boundingRect(coords)
