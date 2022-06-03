@@ -5,7 +5,7 @@ from pathlib import Path
 from imutils import rotate_bound, rotate
 from peakdetect import peakdetect
 #%%
-p = r"./out/line_segmented/P123-Fg001-R-C01-R01-binarized/line-3.jpg"
+p = r"C:\Users\Jesper\Documents\local-study\2-4-hwr\Handwriting_Recognition\data\iam\img\c01-014-07.png"
 img = cv.imread(p)
 img = cv.cvtColor(img, cv.COLOR_RGB2GRAY)
 
@@ -73,3 +73,8 @@ def birot():
     pim(rimg)
     imgr = with_rotated_lines(img, angle, bounds)
     pim(imgr)
+
+#%%
+pim(img)
+pim(rotate_bound(img, 40))
+pim(rotate_bound(img, -40))
