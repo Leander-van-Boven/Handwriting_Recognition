@@ -7,8 +7,8 @@ from typing import Union
 import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
-from tqdm import tqdm
 from ctc_decoder import beam_search
+from tqdm import tqdm
 
 from src.dss.line_segment import LineSegmenter
 from src.dss.model_architecture import get_model
@@ -47,10 +47,11 @@ class DssPipeline:
         'output_to_txt_file'
     ]
 
-    def __init__(self, conf: AttrDict, source_dir: Union[Path, str], store_dir: Union[Path, str]):
+    def __init__(self, conf: AttrDict, source_dir: Union[Path, str], glob: str, store_dir: Union[Path, str]):
         self.conf = conf
         self.store_dir = Path(store_dir).resolve()
         self.source_dir = Path(source_dir).resolve()
+        self.glob = glob
         self.force_all = False
 
         # scroll fields
@@ -91,7 +92,7 @@ class DssPipeline:
             eval('self.' + stage)(force=True)
 
     def _get_scrolls(self):
-        files = list((self.source_dir / 'scrolls').glob('*binarized.jpg'))
+        files = list((self.source_dir / 'scrolls').glob(self.glob))
         self.scrolls = [preprocessed(cv.imread(str(file))) for file in
                         tqdm(files, desc='Loading scroll images from disk')]
         self.scroll_names = [file.name.split('.')[0] for file in files]

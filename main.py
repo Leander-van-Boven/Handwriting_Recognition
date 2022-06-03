@@ -8,7 +8,7 @@ from src.dss import DssPipeline
 
 
 def handle_dss(args, conf):
-    dss = DssPipeline(conf.dss, args.indir / 'dss', args.outdir)
+    dss = DssPipeline(conf.dss, args.indir, args.outdir)
     dss.run_stage_or_full(args.stage, args.force)
 
 
@@ -26,16 +26,17 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('-c', '--config', type=argparse.FileType('r'), default='./config.yaml')
-    parser.add_argument('-i', '--indir', type=Path, default='./data')
-    parser.add_argument('-o', '--outdir', type=Path, default='./out')
+    parser.add_argument('-o', '--out', type=Path, default='./out')
     subparsers = parser.add_subparsers(
         dest='cmd', help='the task to scope to: dss=Dead Sea Scrolls tasks; iam=IAM-dataset task')
     subparsers.required = True
 
     # Create parser for Dead Sea Scrolls task
     parser_dss = subparsers.add_parser('dss')
+    parser_dss.add_argument('-i', '--in', type=Path, default='./data/dss')
     parser_dss.add_argument('-s', '--stage', choices=DssPipeline.STAGES + ['full'], default='full')
     parser_dss.add_argument('-f', '--force', action='store_true')
+    parser_dss.add_argument('-g', '--glob', type=str, default='*binarized.jpg')
     # ...dss arguments
     parser_dss.set_defaults(func=handle_dss)
 
