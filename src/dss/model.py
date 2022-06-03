@@ -19,7 +19,7 @@ parent_dir = 'FINAL_IMAGES2'
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
 TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
-num_images = (1014, 182, 182)
+num_images = (1014, 234, 234)
 output_layer = None
 
 checkpoint_path = 'trained_model/trained_model.ckpt'
@@ -63,6 +63,10 @@ def read_in_data():
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
             # tmp.append(image_arr)
+            # Get 40 wide window and normalize
+            image_arr = image_arr[:, 15:55] // 255
+            # Invert image to make black background white
+            image_arr = np.where(image_arr == 0, 1, 0)
             train_ds.append(image_arr)
             train_labels.append(one_hot_encoded_labels[ENUMERATOR])
         # train_ds.append(tmp)
@@ -80,6 +84,10 @@ def read_in_data():
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
             # tmp.append(image_arr)
+            # Get 40 wide window and normalize
+            image_arr = image_arr[:, 15:55] // 255
+            # Invert image to make black background white
+            image_arr = np.where(image_arr == 0, 1, 0)
             test_ds.append(image_arr)
             test_labels.append(one_hot_encoded_labels[ENUMERATOR])
         # test_ds.append(tmp)
@@ -98,6 +106,10 @@ def read_in_data():
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
             # tmp.append(image_arr)
+            # Get 40 wide window and normalize
+            image_arr = image_arr[:, 15:55] // 255
+            # Invert image to make black background white
+            image_arr = np.where(image_arr == 0, 1, 0)
             validation_ds.append(image_arr)
             validation_labels.append(one_hot_encoded_labels[ENUMERATOR])
         # validation_ds.append(tmp)

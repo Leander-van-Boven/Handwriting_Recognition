@@ -67,7 +67,7 @@ class DssPipeline:
 
         # classification fields
         self.model = get_model()  # provide argument values if necessary
-        self.model.load_weights('src/dss/trained_model/trained_model.ckpt.index')
+        # self.model.load_weights('src/dss/trained_model/trained_model.ckpt')
         self.predictions = None
 
         # final CTC application fields
