@@ -68,3 +68,7 @@ def create_ngrams(verbose: bool = False):
         } for uni_char in bi_grams
     }
     save_uni_bi_grams(uni_grams_hebrew, bi_grams_hebrew, ngram_hebrew_out_path)
+
+
+if __name__ == '__main__':
+    create_ngrams(verbose=True)

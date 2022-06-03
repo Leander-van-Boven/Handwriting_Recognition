@@ -1,5 +1,4 @@
-from tensorflow.python.keras import models, layers, losses, callbacks
-from tensorflow.python.keras.layers.advanced_activations import PReLU
+from tensorflow.python.keras import callbacks
 import os
 import PIL
 from tqdm import tqdm
@@ -20,6 +19,7 @@ parent_dir = 'FINAL_IMAGES2'
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
 TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
+num_images = (1014, 182, 182)
 output_layer = None
 
 checkpoint_path = 'trained_model/trained_model.ckpt'
@@ -53,31 +53,33 @@ def read_in_data():
 
     ENUMERATOR = 0
     for letter in tqdm(os.listdir(TRAIN_PATH), desc='Reading in Training Data'):
-        #tmp = []
+        # tmp = []
         image_folder = os.path.join(TRAIN_PATH, letter)
         for counter, im_file in enumerate(os.listdir(image_folder)):
-            if counter >= 1014:
+            if counter >= num_images[0]:  # 26*39
                 break
-            #image = cv2.imread(os.path.join(image_folder, im_file))
-            #tmp.append(image)
+            # image = cv2.imread(os.path.join(image_folder, im_file))
+            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
+            # tmp.append(image_arr)
             train_ds.append(image_arr)
             train_labels.append(one_hot_encoded_labels[ENUMERATOR])
-        #train_ds.append(tmp)
+        # train_ds.append(tmp)
         ENUMERATOR += 1
 
     ENUMERATOR = 0
     for letter in tqdm(os.listdir(TEST_PATH), desc='Reading in Test Data'):
         image_folder = os.path.join(TEST_PATH, letter)
         tmp = []
-        for im_file in os.listdir(image_folder):
-            #image = cv2.imread(os.path.join(image_folder, im_file))
-            #tmp.append(image)
+        for counter, im_file in enumerate(os.listdir(image_folder)):
+            if counter >= num_images[2]:  # 26*7
+                break
+            # image = cv2.imread(os.path.join(image_folder, im_file))
+            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
+            # tmp.append(image_arr)
             test_ds.append(image_arr)
             test_labels.append(one_hot_encoded_labels[ENUMERATOR])
         # test_ds.append(tmp)
@@ -87,22 +89,21 @@ def read_in_data():
     for letter in tqdm(os.listdir(VALIDATION_PATH), desc='Reading in Validation Data'):
         image_folder = os.path.join(VALIDATION_PATH, letter)
         tmp = []
-        for im_file in os.listdir(image_folder):
-            #image = cv2.imread(os.path.join(image_folder, im_file))
+        for counter, im_file in enumerate(os.listdir(image_folder)):
+            if counter >= num_images[1]:  # 26*7
+                break
+            # image = cv2.imread(os.path.join(image_folder, im_file))
 
             # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
+            # tmp.append(image_arr)
             validation_ds.append(image_arr)
             validation_labels.append(one_hot_encoded_labels[ENUMERATOR])
-        #validation_ds.append(tmp)
+        # validation_ds.append(tmp)
         ENUMERATOR += 1
 
-
-
     return np.array(train_ds), np.array(train_labels), np.array(test_ds), np.array(test_labels), np.array(validation_ds), np.array(validation_labels)
-    # return train_ds, train_labels, test_ds, test_labels, validation_ds, validation_labels
 
 
 def test_model(model, test_data, test_labels):
