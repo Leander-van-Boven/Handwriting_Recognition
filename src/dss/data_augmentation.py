@@ -1,5 +1,7 @@
+import json
 import os
 import random
+from pathlib import Path
 
 import albumentations as A
 from PIL import Image, ImageOps
@@ -11,8 +13,11 @@ from skimage.util import invert
 from skimage import img_as_ubyte
 import matplotlib.pyplot as plt
 
+from src.dss.model import num_images
+
+
 # region GLOBAL VARIABLES - assuming original data folder is in some
-PARENT_DIR = 'hwr-2022-dss-data-main\characters'
+PARENT_DIR = Path('./data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 CROP_PARENT_DIR = 'Cropped_Images'
 AUGMENTED_PARENT_DIR = 'Augmented_Characters'
 THRESHOLD_PARENT_DIR = "Threshold_images"
@@ -516,15 +521,31 @@ def train_test_validation(use_augmented=False, no_validation=False, train_percen
             ENUMERATOR += 1
 
 
+def create_blank_images():
+    with open(Path('./data/dss/ngrams/ngrams_processed.json').resolve(), 'r') as f:
+        ngrams = json.load(f)
+        uni_grams = ngrams['uni_grams']
+        bi_grams = ngrams['bi_grams']
+
+    for ds_type, num_blank in zip(['Train', 'Validation', 'Test'], num_images):
+        path = PARENT_DIR / ds_type
+        blank_path = path / 'Blank'
+        if not blank_path.exists():
+            blank_path.mkdir()
+
+        for i in range(num_blank):
+            np.random.choice([key for key in uni_grams.keys()], p=uni_grams.values())
+
+
 if __name__ == '__main__':
     print("[INFO] Performing Data Augmentation\n===========================================")
     # threshold()
     # crop_images()
-    max_height, max_width = determine_largest_size()
-    augment(max_height=max_height, max_width=max_width)
-    train_test_validation(use_augmented=True,
-                           no_validation=False,
-                          train_percent=0.8,
-                         test_percent=0.1,
-                          validation_percent=0.1,
-                          parent_dir="FINAL_IMAGES_AUGMENTS")
+    # max_height, max_width = determine_largest_size()
+    # augment(max_height=max_height, max_width=max_width)
+    # train_test_validation(use_augmented=True,
+    #                       no_validation=False,
+    #                       train_percent=0.8,
+    #                       test_percent=0.1,
+    #                       validation_percent=0.1,
+    #                       parent_dir="FINAL_IMAGES_AUGMENTS")

@@ -12,7 +12,7 @@ from ctc_decoder import beam_search
 
 from src.dss.line_segment import LineSegmenter
 from src.dss.model_architecture import get_model
-from src.dss.sliding_window import SlidingWindowClassifier
+from src.sliding_window import SlidingWindowClassifier
 from src.dss.word_segment import WordSegmenter
 from src.dss.hebrew_unicodes import HebrewUnicodes
 from src.utils.custom_language_model import CustomLanguageModel
@@ -67,7 +67,7 @@ class DssPipeline:
 
         # classification fields
         self.model = get_model()  # provide argument values if necessary
-        self.model.load_weights('../trained_model/trained_model.ckpt.index')
+        self.model.load_weights('src/dss/trained_model/trained_model.ckpt.index')
         self.predictions = None
 
         # final CTC application fields
