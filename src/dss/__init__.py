@@ -1,1 +1,1 @@
-from src.dss.dss import *
+from src.dss.dss import DssPipeline
