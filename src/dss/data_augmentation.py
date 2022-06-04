@@ -17,11 +17,11 @@ from src.dss.model import num_images
 
 
 # region GLOBAL VARIABLES - assuming original data folder is in some
-PARENT_DIR = Path('./data/dss/FINAL_IMAGES_AUGMENTS').resolve()
+PARENT_DIR = Path('../../data/dss/characters').resolve()
 CROP_PARENT_DIR = 'Cropped_Images'
 AUGMENTED_PARENT_DIR = 'Augmented_Characters'
 THRESHOLD_PARENT_DIR = "Threshold_images"
-FINAL_PARENT_DIR = "FINAL_IMAGES"
+FINAL_PARENT_DIR = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 SAVE_EXTENSION = ".jpg"
 
 PADDING = 2  # Number of Pixels of padding to add after Bounding Box
@@ -522,19 +522,41 @@ def train_test_validation(use_augmented=False, no_validation=False, train_percen
 
 
 def create_blank_images():
-    with open(Path('./data/dss/ngrams/ngrams_processed.json').resolve(), 'r') as f:
+    # Load n-grams for probabilities
+    with open(Path('../../data/dss/ngrams/ngrams_processed.json').resolve(), 'r') as f:
         ngrams = json.load(f)
         uni_grams = ngrams['uni_grams']
         bi_grams = ngrams['bi_grams']
 
+    # Generate 'Blank' character images (i.e. sliding window location 'between' two characters)
+    # for train, validation and test
     for ds_type, num_blank in zip(['Train', 'Validation', 'Test'], num_images):
-        path = PARENT_DIR / ds_type
-        blank_path = path / 'Blank'
+        path = FINAL_PARENT_DIR / ds_type
+        blank_path = path / 'ZBlank'
         if not blank_path.exists():
-            blank_path.mkdir()
+            os.mkdir(blank_path)
 
-        for i in range(num_blank):
-            np.random.choice([key for key in uni_grams.keys()], p=uni_grams.values())
+        for i in tqdm(range(num_blank // 3), desc=f'Generating Blank images for {ds_type}'):
+            char_one = None
+            while char_one is None:
+                char_one = np.random.choice([key for key in uni_grams.keys()], p=[value for value in uni_grams.values()])
+                if char_one in ['Kaf-final', 'Nun-final', 'Tsadi-final']:
+                    char_one = None
+            char_two = np.random.choice([key for key in bi_grams[char_one].keys()],
+                                        p=[value for value in bi_grams[char_one].values()])
+
+            char_one_file = random.choice(os.listdir(path / char_one))
+            char_two_file = random.choice(os.listdir(path / char_two))
+
+            char_one_img = cv2.imread(str(path / char_one / char_one_file))
+            char_two_img = cv2.imread(str(path / char_two / char_two_file))
+
+            merged_img = np.concatenate((char_one_img[:, 15:55], char_two_img[:, 15:55]), axis=1)
+
+            for j in range(1, 4):
+                blank_img = merged_img[:, j * 10:j * 10 + 40]
+                blank_img = cv2.copyMakeBorder(blank_img, 0, 0, 15, 16, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                cv2.imwrite(str(blank_path / f'Blank_{ds_type.lower()}_{i * 3 + j}{SAVE_EXTENSION}'), blank_img)
 
 
 if __name__ == '__main__':
@@ -549,3 +571,4 @@ if __name__ == '__main__':
     #                       test_percent=0.1,
     #                       validation_percent=0.1,
     #                       parent_dir="FINAL_IMAGES_AUGMENTS")
+    create_blank_images()
