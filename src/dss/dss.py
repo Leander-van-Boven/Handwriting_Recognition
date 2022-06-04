@@ -8,6 +8,7 @@ import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
 from ctc_decoder import beam_search
+from tensorflow.python.keras.models import load_model
 from tqdm import tqdm
 
 from src.line_segment import LineSegmenter
@@ -62,7 +63,9 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = None
+        self.model = get_model()  # provide argument values if necessary
+        # self.model.load_weights('src/dss/models/models.ckpt')
+        self.model = load_model('src/dss/models/best_model')
         self.predictions = None
 
         # final CTC application fields
@@ -155,9 +158,6 @@ class DssPipeline:
     def classify(self):
         if self.word_images is None:
             self.word_segment()
-
-        self.model = get_model()  # provide argument values if necessary
-        self.model.load_weights('src/dss/trained_model/trained_model.ckpt')
 
         classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
                                              self.conf.classification)

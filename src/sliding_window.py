@@ -34,8 +34,14 @@ class SlidingWindowClassifier:
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
         # TODO: check if this is working
         if self.model is None:
-            return np.random.rand(1, self.num_classes)
-        return self.model.predict(window.reshape(1, *window.shape))[0]
+            return np.random.rand(self.num_classes)
+        print('Window shape:', window.shape)
+        window = np.expand_dims(window, axis=(0,3))
+        print('New Window shape:', window.shape)
+        predictions = self.model.predict(window)
+        print('Predictions shape:', predictions.shape, ' Predictions: ', predictions)
+        raise
+        return predictions
 
     def infer_probability_matrix(self, image):
         resized, slices = self.resize_and_slice(image)

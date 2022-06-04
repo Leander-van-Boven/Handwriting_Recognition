@@ -27,6 +27,8 @@ SAVE_EXTENSION = ".jpg"
 PADDING = 2  # Number of Pixels of padding to add after Bounding Box
 AUGMENTATIONS = 5
 NUM_SPECIAL_AUGMENTS = 5
+WINDOW_SIZE = 40
+HOP_SIZE = WINDOW_SIZE // 4
 # endregion
 
 
@@ -554,7 +556,7 @@ def create_blank_images():
             merged_img = np.concatenate((char_one_img[:, 15:55], char_two_img[:, 15:55]), axis=1)
 
             for j in range(1, 4):
-                blank_img = merged_img[:, j * 10:j * 10 + 40]
+                blank_img = merged_img[:, j * HOP_SIZE:j * HOP_SIZE + WINDOW_SIZE]
                 blank_img = cv2.copyMakeBorder(blank_img, 0, 0, 15, 16, cv2.BORDER_CONSTANT, value=[255, 255, 255])
                 cv2.imwrite(str(blank_path / f'Blank_{ds_type.lower()}_{i * 3 + j}{SAVE_EXTENSION}'), blank_img)
 

@@ -13,22 +13,15 @@ from src.dss.model_architecture import get_model, compile_model
 
 image_height = 71
 image_width = 71
-colour_channels = 3
-input_shape = (image_height, image_width, colour_channels)
 batch_size = 16
-epochs = 15
-num_classes = 28
+epochs = 25
 num_models = 10
 
-# Assumes this file is in the same directory as the `parent_dir`
 parent_dir = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
 TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
 num_images = (1014, 234, 234)
-output_layer = None
-
-checkpoint_path = 'trained_model/trained_model.ckpt'
 
 
 # label files are one hot encoded
@@ -47,7 +40,7 @@ def read_in_data():
         letters.append(letter)
 
     one_hot_encoded_labels = []
-    for i in range(len(letters)):  # == list of 27
+    for i in range(len(letters)):  # == list of 28
         tmp = []
         for j in range(len(letters)):
             if j == i:
@@ -69,7 +62,7 @@ def read_in_data():
             image_arr = np.array(image)
             # tmp.append(image_arr)
             # Get 40 wide window and normalize
-            image_arr = image_arr[:, 15:55] // 255
+            image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             train_ds.append(image_arr)
@@ -90,7 +83,7 @@ def read_in_data():
             image_arr = np.array(image)
             # tmp.append(image_arr)
             # Get 40 wide window and normalize
-            image_arr = image_arr[:, 15:55] // 255
+            image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             test_ds.append(image_arr)
@@ -112,7 +105,7 @@ def read_in_data():
             image_arr = np.array(image)
             # tmp.append(image_arr)
             # Get 40 wide window and normalize
-            image_arr = image_arr[:, 15:55] // 255
+            image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             validation_ds.append(image_arr)
@@ -128,27 +121,6 @@ def shuffle_data(train_ds, train_labels):
     assert len(train_ds) == len(train_labels)
     p = np.random.permutation(len(train_ds))
     return train_ds[p], train_labels[p]
-
-
-# def test_model(model, test_data, test_labels):
-#     correct = 0
-#     total = 0
-#
-#     for j in tqdm(range(len(test_data)), 'Testing The Model'):
-#         predicted = model.predict(test_data[j].reshape((1, 71, 71, 3)))[0]
-#         # Predicted is an array of confidence values
-#         max_val = max(predicted)
-#         for i in range(len(predicted)):
-#             if predicted[i] == max_val:
-#                 predicted[i] = 1
-#             else:
-#                 predicted[i] = 0
-#
-#         total += 1
-#         if (predicted == test_labels[j]).all():
-#             correct += 1
-#
-#     print("[RESULTS] Percentage Correct = %f" % (correct/total))
 
 
 # adapted from
@@ -196,16 +168,29 @@ if __name__ == "__main__":
 
     for i in range(num_models):
         print(f"[INFO] Constructing Model {i}")
-        model = get_model(verbose=True)
+        model = get_model(verbose=i == 0)
         compile_model(model)
 
         print("[INFO] Beginning Model Training")
-        cp_callback = callbacks.ModelCheckpoint(filepath=f'trained_model{i}/trained_model.ckpt',
-                                                save_weights_only=True,
-                                                verbose=1)
-        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=cp_callback,
+        # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
+        #                                         save_weights_only=True,
+        #                                         verbose=1)
+        early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+        tb = callbacks.TensorBoard(
+            log_dir=f'models/train_model{i}_logs',
+            histogram_freq=1,
+            write_graph=True,
+            write_images=False,
+            write_steps_per_second=False,
+            update_freq='epoch',
+            profile_batch=0,
+            embeddings_freq=0,
+            embeddings_metadata=None
+        )
+        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=[early_stopping, tb],
                       batch_size=batch_size,
                       validation_data=(validation_data, validation_labels))
+        model.save(f'models/trained_model{i}')
 
         print("[INFO] Generating Predictions")
         test_pred_raw = model.predict(test_data)
