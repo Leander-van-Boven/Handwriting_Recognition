@@ -50,12 +50,12 @@ def piece_wise_segment(im, n_splits=20, line_start_splits=10, start_lookahead=50
     # Line starts
     start = np.column_stack(tuple(chunks[-line_start_splits:]))
     prof = projection_profile(start)
-    line_starts = valleys_from_profile(prof, lookahead=start_lookahead)
+    line_starts = valleys_from_profile(prof, lookahead=start_lookahead, threshold=start.shape[1]/50)
     if len(line_starts) == 0:
         return [], dims
 
     lines = [[y] for y in line_starts]
-    valleys_per_chunk = [valleys_from_profile(projection_profile(chunk), lookahead=chunk_lookahead)
+    valleys_per_chunk = [valleys_from_profile(projection_profile(chunk), lookahead=chunk_lookahead, threshold=chunk.shape[1]/20)
                          for chunk in chunks]
 
     # Line traversal
