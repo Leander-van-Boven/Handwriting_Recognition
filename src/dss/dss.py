@@ -8,6 +8,7 @@ import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
 from ctc_decoder import beam_search
+from tensorflow.python.keras.models import load_model
 from tqdm import tqdm
 
 from src.dss.line_segment import LineSegmenter
@@ -59,7 +60,8 @@ class DssPipeline:
 
         # classification fields
         self.model = get_model()  # provide argument values if necessary
-        self.model.load_weights('src/dss/trained_model/trained_model.ckpt')
+        # self.model.load_weights('src/dss/models/models.ckpt')
+        self.model = load_model('src/dss/models/best_model')
         self.predictions = None
 
         # final CTC application fields

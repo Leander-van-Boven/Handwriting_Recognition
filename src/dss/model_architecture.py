@@ -26,7 +26,7 @@ from keras.layers import BatchNormalization
 #     return model
 
 
-def get_model(num_classes=28, input_shape=(71, 40, 3), verbose: bool = False):
+def get_model(num_classes=28, input_shape=(71, 40, 1), verbose: bool = False):
     model = Sequential()
     model.add(Conv2D(filters=32, kernel_size=2, activation=PReLU(), input_shape=input_shape))
     model.add(BatchNormalization())

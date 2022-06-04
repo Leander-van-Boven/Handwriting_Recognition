@@ -1,5 +1,3 @@
-import string
-
 from tensorflow.python.keras import models, layers, losses, Model
 from tensorflow.keras.layers import Dense
 from tensorflow.python.keras.losses import CategoricalCrossentropy
@@ -32,7 +30,7 @@ from keras.applications.efficientnet_v2 import EfficientNetV2B3
 #     return None
 
 
-def get_model(num_classes=62, input_shape=(128, 128, 3), transfer_learning=True, verbose=False):
+def get_model(num_classes=63, input_shape=(128, 100, 1), transfer_learning=True, verbose=False):
     base_model = EfficientNetV2B3(
         include_top=False,
         weights='imagenet',

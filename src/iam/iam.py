@@ -51,7 +51,7 @@ class IamPipeline:
         self.predictions = None
 
         # final CTC application fields
-        self.characters = alphabet.lower + alphabet.upper  # + alphabet.digits
+        self.characters = alphabet.lower + alphabet.upper + alphabet.digits
         with open(self.source_dir / 'ngrams' / 'ngrams_processed.json', 'r') as ngrams_file:
             n_grams = json.load(ngrams_file)
         self.iam_language_model = CustomLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])

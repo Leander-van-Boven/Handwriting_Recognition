@@ -27,7 +27,7 @@ TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
 output_layer = None
 
-checkpoint_path = 'trained_model/trained_model.ckpt'
+checkpoint_path = 'models/best_model/models.ckpt'
 EPOCHS = 5
 
 def plot_model(history):
