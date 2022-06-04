@@ -16,7 +16,7 @@ image_width = 71
 colour_channels = 3
 input_shape = (image_height, image_width, colour_channels)
 batch_size = 16
-epochs = 15
+epochs = 25
 num_classes = 28
 num_models = 10
 
@@ -196,16 +196,29 @@ if __name__ == "__main__":
 
     for i in range(num_models):
         print(f"[INFO] Constructing Model {i}")
-        model = get_model(verbose=True)
+        model = get_model(verbose=i == 0)
         compile_model(model)
 
         print("[INFO] Beginning Model Training")
-        cp_callback = callbacks.ModelCheckpoint(filepath=f'trained_model{i}/trained_model.ckpt',
-                                                save_weights_only=True,
-                                                verbose=1)
-        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=cp_callback,
+        # cp_callback = callbacks.ModelCheckpoint(filepath=f'trained_model{i}/trained_model.ckpt',
+        #                                         save_weights_only=True,
+        #                                         verbose=1)
+        early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=1)
+        tb = callbacks.TensorBoard(
+            log_dir=f'trained_model{i}_logs',
+            histogram_freq=1,
+            write_graph=True,
+            write_images=False,
+            write_steps_per_second=False,
+            update_freq='epoch',
+            profile_batch=0,
+            embeddings_freq=0,
+            embeddings_metadata=None
+        )
+        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=[early_stopping, tb],
                       batch_size=batch_size,
                       validation_data=(validation_data, validation_labels))
+        model.save(f'trained_model{i}')
 
         print("[INFO] Generating Predictions")
         test_pred_raw = model.predict(test_data)

@@ -46,11 +46,11 @@ def get_model(num_classes=28, input_shape=(71, 40, 3), verbose: bool = False):
 
     model.add(Conv2D(filters=128, kernel_size=3, activation=PReLU()))
     model.add(BatchNormalization())
-    model.add(Conv2D(filters=128, kernel_size=3, activation=PReLU()))
-    model.add(BatchNormalization())
+    # model.add(Conv2D(filters=128, kernel_size=3, activation=PReLU()))
+    # model.add(BatchNormalization())
     model.add(Flatten())
     model.add(Dropout(0.4))
-    model.add(Dense(48, activation=PReLU()))
+    model.add(Dense(96, activation=PReLU()))
     model.add(Dropout(0.4))
     model.add(Dense(num_classes, activation='softmax'))
 
