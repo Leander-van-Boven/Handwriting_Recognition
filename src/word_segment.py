@@ -57,7 +57,7 @@ def word_segment(image: np.ndarray, min_nonzero_px: int, max_angle: int, min_ang
 
 
 class WordSegmenter:
-    def __init__(self, conf: AttrDict, save=False, store_dir: Optional[Union[Path, str]] = None):
+    def __init__(self, conf: AttrDict, store_dir: Optional[Union[Path, str]] = None):
         self._segment = partial(word_segment, min_nonzero_px=conf.min_nonzero_px, max_angle=conf.max_angle,
                                 min_angle=conf.min_angle, angle_step=conf.angle_step, min_consec=conf.min_consec)
         self.store_dir = Path(store_dir)

@@ -10,7 +10,7 @@ from attrdict import AttrDict
 from ctc_decoder import beam_search
 from tqdm import tqdm
 
-from src.dss.line_segment import LineSegmenter
+from src.line_segment import LineSegmenter
 from src.dss.model_architecture import get_model
 from src.sliding_window import SlidingWindowClassifier
 from src.utils.imutils import preprocessed
@@ -99,13 +99,13 @@ class DssPipeline:
     def line_segment(self):
         if self.scrolls is None:
             self._get_scrolls()
-        segmenter = LineSegmenter(self.conf.segmentation.line[0],
+        segmenter = LineSegmenter(self.conf.segmentation.line[1],
                                   self.store_dir / 'line_segmented')
-        self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names)
+        self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names,
+                                                                           self.save_intermediate)
 
     def word_segment(self):
-        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.save_intermediate,
-                                  self.store_dir / 'word_segmented')
+        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and self.load_intermediate:
             self.word_images, self.word_image_data = segmenter.load_from_disk()
         else:

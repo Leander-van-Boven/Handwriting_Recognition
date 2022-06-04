@@ -79,8 +79,7 @@ class IamPipeline:
         self.answers = {name: line for name, line in zip(text[0::2], text[1::2])}
 
     def word_segment(self):
-        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.save_intermediate,
-                                  self.store_dir / 'word_segmented')
+        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and self.load_intermediate:
             self.word_images, self.word_image_data = segmenter.load_from_disk()
         else:
