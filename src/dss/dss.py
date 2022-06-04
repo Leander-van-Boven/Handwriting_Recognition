@@ -30,6 +30,7 @@ class DssPipeline:
     STAGES = [
         'line_segment',
         'word_segment',
+        'segment_statistics',
         'classify_augment',
         'model_train',
         'classify',
@@ -45,6 +46,9 @@ class DssPipeline:
         self.save_intermediate = args.save_intermediate
         self.load_intermediate = args.load_intermediate
 
+        # test data fields
+        self.answers = None
+
         # scroll fields
         self.scrolls = None
         self.scroll_names = None
@@ -58,8 +62,7 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = get_model()  # provide argument values if necessary
-        # self.model.load_weights('src/dss/trained_model/trained_model.ckpt')
+        self.model = None
         self.predictions = None
 
         # final CTC application fields
@@ -87,6 +90,12 @@ class DssPipeline:
                         tqdm(files, desc='Loading scroll images from disk')]
         self.scroll_names = [file.name.split('.')[0] for file in files]
 
+    def _get_test_data(self):
+        files = list(self.source_dir.glob('test_results/*_characters.txt'))
+        self.answers = {}
+        for file in files:
+            self.answers[file.name.split('_')[0]] = file.read_text(encoding='utf-8')
+
     def line_segment(self):
         if self.scrolls is None:
             self._get_scrolls()
@@ -105,6 +114,35 @@ class DssPipeline:
             self.word_images, self.word_image_data = \
                 segmenter.segment_line_images(self.line_images, self.line_image_data, self.save_intermediate)
 
+    def segment_statistics(self):
+        if self.word_image_data is None:
+            self.word_segment()
+
+        stats = {}
+        for data in self.word_image_data:
+            curr = stats.get(data.name, {})
+            curr['lines'] = max(curr.get('lines', 0), data.line)
+            curr[f'words_line_{data.line}'] = max(curr.get(f'words_line_{data.line}', 0), data.word)
+            stats[data.name] = curr
+
+        if self.answers is None:
+            self._get_test_data()
+        if self.answers is not None:
+            for key in stats.keys():
+                if key in self.answers:
+                    lines = self.answers[key].split('\n')
+                    no_words_per_line = [len(words) for words in [line.split(' ') for line in lines]]
+                    stats[key]['actual_lines'] = len(lines)
+                    for i, wc in enumerate(no_words_per_line):
+                        stats[key][f'actual_words_line_{i}'] = wc
+
+        from pprint import pprint
+        for key, val in stats.items():
+            print(key)
+            pprint(val)
+            print()
+
+
     def classify_augment(self):
         pass
 
@@ -117,6 +155,10 @@ class DssPipeline:
     def classify(self):
         if self.word_images is None:
             self.word_segment()
+
+        self.model = get_model()  # provide argument values if necessary
+        self.model.load_weights('src/dss/trained_model/trained_model.ckpt')
+
         classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
                                              self.conf.classification)
         self.predictions = classifier.classify_all()

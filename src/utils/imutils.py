@@ -43,11 +43,12 @@ def projection_profile(chunk, window_length=20):
     return np.convolve(reduced, kernel, mode='same')
 
 
-def valleys_from_profile(profile, lookahead):
+def valleys_from_profile(profile, lookahead, threshold=np.Inf):
     _, valleys = peakdetect(profile, lookahead=lookahead)
     if len(valleys) == 0:
         return []
-    locs, _ = zip(*valleys)
+    # locs, _ = zip(*valleys)
+    locs = [x for x, y in valleys if y < threshold]
     return list(locs)
 
 

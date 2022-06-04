@@ -22,7 +22,7 @@ class SlidingWindowClassifier:
         window_width = self.window_size[1]
         num_steps, mod = divmod((image_width - window_width), self.hop_size)
         slices = [
-            np.s_[:, pos:(pos + window_width), :]
+            np.s_[:, pos:(pos + window_width), ...]
             for pos in range(0, (num_steps * self.hop_size) + 1, self.hop_size)
         ]
         if mod != 0:
@@ -34,7 +34,7 @@ class SlidingWindowClassifier:
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
         # TODO: check if this is working
         if self.model is None:
-            return np.random.rand(self.num_classes)
+            return np.random.rand(1, self.num_classes)
         return self.model.predict(window.reshape(1, *window.shape))[0]
 
     def infer_probability_matrix(self, image):

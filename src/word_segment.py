@@ -85,7 +85,7 @@ class WordSegmenter:
         return all_word_images, all_word_image_data
 
     def segment_line_images(self, images, data, save):
-        if self.store_dir.exists():
+        if self.store_dir.exists() and save:
             shutil.rmtree(self.store_dir)
         word_ims_per_im = (self._segment(im) for im in images)
         all_word_images = []
