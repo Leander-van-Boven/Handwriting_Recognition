@@ -4,12 +4,13 @@ from tqdm import tqdm
 
 
 class SlidingWindowClassifier:
-    def __init__(self, model, num_classes, word_images, conf):
+    def __init__(self, model, num_classes, word_images, right_to_left, conf):
         self.model = model
         self.num_classes = num_classes
         self.word_images = word_images
         self.window_size = conf.window.size
         self.hop_size = conf.window.hop_size
+        self.right_to_left = right_to_left
         self.channels = conf.window.channels
 
     def resize_and_slice(self, image):
@@ -21,18 +22,20 @@ class SlidingWindowClassifier:
 
         image_width = resized_im.shape[1]
         window_width = self.window_size[1]
-        num_steps, mod = divmod((image_width - window_width), self.hop_size)
-        slices = [
-            np.s_[:, pos:(pos + window_width), ...]
-            for pos in range(0, (num_steps * self.hop_size) + 1, self.hop_size)
-        ]
-        if mod != 0:
-            slices.append(np.s_[:, (image_width - window_width):image_width])
+        num_steps, rem = divmod((image_width - window_width), self.hop_size)
+        slices = []
+        for i in range(0, num_steps-rem):
+            offset = i * self.hop_size
+            slices.append(np.s_[:, offset:offset + window_width, ...])
+        for i in range(num_steps-rem, num_steps):
+            offset = (i + 1) * self.hop_size
+            slices.append(np.s_[:, offset:offset + window_width, ...])
+            assert offset+window_width <= image_width
         # Reverse slices to account for RTL
-        slices.reverse()
+        if self.right_to_left:
+            slices.reverse()
         return resized_im, slices
 
-    infer_counter = 0
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
         if self.model is None:
             return np.random.rand(self.num_classes)

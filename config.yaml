@@ -9,6 +9,10 @@ dss:
         expected_line_height: 200
         cc_min_a: 500
         cc_max_a: 100000
+      - start_fraction: 0.25
+        step_fraction: 0.017
+        cc_min_a: 500
+        cc_max_a: 100000
     word:
       - max_angle: 20
         min_angle: -20

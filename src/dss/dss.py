@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from pathlib import Path
+from typing import Union
 
 import cv2 as cv
 import numpy as np
@@ -10,7 +11,7 @@ from ctc_decoder import beam_search
 from tensorflow.python.keras.models import load_model
 from tqdm import tqdm
 
-from src.dss.line_segment import LineSegmenter
+from src.line_segment import LineSegmenter
 from src.sliding_window import SlidingWindowClassifier
 from src.utils.imutils import preprocessed
 from src.word_segment import WordSegmenter
@@ -93,13 +94,13 @@ class DssPipeline:
     def line_segment(self):
         if self.scrolls is None:
             self._get_scrolls()
-        segmenter = LineSegmenter(self.conf.segmentation.line[0],
+        segmenter = LineSegmenter(self.conf.segmentation.line[1],
                                   self.store_dir / 'line_segmented')
-        self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names)
+        self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names,
+                                                                           self.save_intermediate)
 
     def word_segment(self):
-        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.save_intermediate,
-                                  self.store_dir / 'word_segmented')
+        segmenter = WordSegmenter(self.conf.segmentation.word[0], self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and self.load_intermediate:
             self.word_images, self.word_image_data = segmenter.load_from_disk()
         else:
@@ -150,7 +151,7 @@ class DssPipeline:
             self.word_segment()
 
         classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
-                                             self.conf.classification)
+                                             True, self.conf.classification)
         self.predictions = classifier.classify_all()
 
     def ctc(self):
