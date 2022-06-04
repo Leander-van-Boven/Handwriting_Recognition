@@ -30,7 +30,7 @@ from keras.applications.efficientnet_v2 import EfficientNetV2B3
 #     return None
 
 
-def get_model(num_classes=63, input_shape=(128, 100, 1), transfer_learning=True, verbose=False):
+def get_model(num_classes=63, input_shape=(128, 64, 3), transfer_learning=True, verbose=False):
     base_model = EfficientNetV2B3(
         include_top=False,
         weights='imagenet',

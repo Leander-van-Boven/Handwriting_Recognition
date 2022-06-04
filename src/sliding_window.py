@@ -10,6 +10,7 @@ class SlidingWindowClassifier:
         self.word_images = word_images
         self.window_size = conf.window.size
         self.hop_size = conf.window.hop_size
+        self.channels = conf.window.channels
 
     def resize_and_slice(self, image):
         assert self.hop_size > 0
@@ -31,16 +32,15 @@ class SlidingWindowClassifier:
         slices.reverse()
         return resized_im, slices
 
+    infer_counter = 0
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
-        # TODO: check if this is working
         if self.model is None:
             return np.random.rand(self.num_classes)
-        print('Window shape:', window.shape)
         window = np.expand_dims(window, axis=(0,3))
-        print('New Window shape:', window.shape)
-        predictions = self.model.predict(window)
-        print('Predictions shape:', predictions.shape, ' Predictions: ', predictions)
-        raise
+        window = np.repeat(window, self.channels, axis=3)
+        assert window.shape == (1, 71, 40, self.channels)
+        predictions = self.model.predict(window)[0]
+        # print('Predictions shape:', predictions.shape, ' Predictions: ', predictions)
         return predictions
 
     def infer_probability_matrix(self, image):

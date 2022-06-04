@@ -19,6 +19,7 @@ dss:
     window:
       size: !!python/tuple [71, 40]
       hop_size: 10
+      channels: 1
 iam:
   threshold: 192
   segmentation:
@@ -32,3 +33,4 @@ iam:
     window:
       size: !!python/tuple [71, 71]
       hop_size: 20
+      channels: 3

@@ -7,6 +7,7 @@ import cv2 as cv
 import numpy as np
 from attrdict import AttrDict
 from ctc_decoder import beam_search
+from tensorflow.python.keras.models import load_model
 from tqdm import tqdm
 
 from src.iam import alphabet
@@ -47,7 +48,7 @@ class IamPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = None  # TODO!
+        self.model = load_model('src/iam/models/best_model')
         self.predictions = None
 
         # final CTC application fields

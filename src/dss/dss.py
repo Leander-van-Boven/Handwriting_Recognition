@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Union
 
 import cv2 as cv
 import numpy as np
@@ -12,7 +11,6 @@ from tensorflow.python.keras.models import load_model
 from tqdm import tqdm
 
 from src.dss.line_segment import LineSegmenter
-from src.dss.model_architecture import get_model
 from src.sliding_window import SlidingWindowClassifier
 from src.utils.imutils import preprocessed
 from src.word_segment import WordSegmenter
@@ -21,13 +19,6 @@ from src.utils.custom_language_model import CustomLanguageModel
 
 
 class DssPipeline:
-    # TODO list:
-    # TODO: Create new images for 'blank' character (based on ngram probabilities)
-    # TODO: Change activation function of output layer to softmax
-    # TODO: Retrain model
-
-    # TODO: IAM!!!!!!!!!
-
     STAGES = [
         'line_segment',
         'word_segment',
@@ -63,7 +54,7 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = get_model()  # provide argument values if necessary
+        # self.model = get_model()
         # self.model.load_weights('src/dss/models/models.ckpt')
         self.model = load_model('src/dss/models/best_model')
         self.predictions = None
@@ -144,7 +135,6 @@ class DssPipeline:
             print(key)
             pprint(val)
             print()
-
 
     def classify_augment(self):
         pass

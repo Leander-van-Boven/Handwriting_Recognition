@@ -12,9 +12,7 @@ from tqdm import tqdm
 
 from src.iam.model_architecture import get_model, compile_model
 
-image_height = 128
-image_width = 100
-batch_size = 16
+batch_size = 32
 epochs = 25
 num_models = 10
 
@@ -54,8 +52,12 @@ def read_in_data():
     ascii_characters = string.ascii_letters + string.digits
 
     def hex_char_to_one_hot(hex_char):
-        zeros = np.zeros(len(ascii_characters))
-        zeros[ascii_characters.index(chr(int(hex_char, 16)))] = 1
+        zeros = np.zeros(len(ascii_characters) + 1)
+        if hex_char == 'ZBlank':
+            zeros[-1] = 1
+        else:
+            zeros[ascii_characters.index(chr(int(hex_char, 16)))] = 1
+        return zeros
 
     one_hot_encoded_labels = {
         hex_char: hex_char_to_one_hot(hex_char) for hex_char in letters
@@ -73,12 +75,12 @@ def read_in_data():
             #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
-            image_arr = np.expand_dims(image_arr[:, padding:padding+WINDOW_SIZE, 0] // 255, axis=2)
+            image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
             assert image_arr.shape[1] == WINDOW_SIZE
             # Invert image to make blackground white
             image_arr = np.where(image_arr == 0, 1, 0)
             train_ds.append(image_arr)
-            train_labels.append(one_hot_encoded_labels[ENUMERATOR])
+            train_labels.append(one_hot_encoded_labels[letter])
         #train_ds.append(tmp)
         ENUMERATOR += 1
 
@@ -94,12 +96,12 @@ def read_in_data():
             #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
-            image_arr = np.expand_dims(image_arr[:, padding:padding+WINDOW_SIZE, 0] // 255, axis=2)
+            image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
             assert image_arr.shape[1] == WINDOW_SIZE
             # Invert image to make blackground white
             image_arr = np.where(image_arr == 0, 1, 0)
             test_ds.append(image_arr)
-            test_labels.append(one_hot_encoded_labels[ENUMERATOR])
+            test_labels.append(one_hot_encoded_labels[letter])
         # test_ds.append(tmp)
         ENUMERATOR += 1
 
@@ -116,12 +118,12 @@ def read_in_data():
             #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
-            image_arr = np.expand_dims(image_arr[:, padding:padding+WINDOW_SIZE, 0] // 255, axis=2)
+            image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
             assert image_arr.shape[1] == WINDOW_SIZE
             # Invert image to make blackground white
             image_arr = np.where(image_arr == 0, 1, 0)
             validation_ds.append(image_arr)
-            validation_labels.append(one_hot_encoded_labels[ENUMERATOR])
+            validation_labels.append(one_hot_encoded_labels[letter])
         #validation_ds.append(tmp)
         ENUMERATOR += 1
 

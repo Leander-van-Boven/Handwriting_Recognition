@@ -11,8 +11,6 @@ import numpy as np
 
 from src.dss.model_architecture import get_model, compile_model
 
-image_height = 71
-image_width = 71
 batch_size = 16
 epochs = 25
 num_models = 10
