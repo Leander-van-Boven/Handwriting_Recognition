@@ -22,6 +22,7 @@ matplotlib = "==3.5.2"
 ctc-decoder = {editable = true, git = "https://github.com/githubharald/CTCDecoder.git"}
 nltk = "*"
 protobuf = "==3.20.1"
+sklearn = "*"
 
 [dev-packages]
 
