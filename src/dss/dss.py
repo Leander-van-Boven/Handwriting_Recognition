@@ -145,7 +145,6 @@ class DssPipeline:
             pprint(val)
             print()
 
-
     def classify_augment(self):
         pass
 
@@ -160,7 +159,7 @@ class DssPipeline:
             self.word_segment()
 
         classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
-                                             self.conf.classification)
+                                             True, self.conf.classification)
         self.predictions = classifier.classify_all()
 
     def ctc(self):

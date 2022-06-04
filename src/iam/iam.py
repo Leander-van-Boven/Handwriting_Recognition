@@ -136,7 +136,7 @@ class IamPipeline:
         if self.word_images is None:
             self.word_segment()
         classifier = SlidingWindowClassifier(self.model, len(self.characters) + 1, self.word_images,
-                                             self.conf.classification)
+                                             False, self.conf.classification)
         self.predictions = classifier.classify_all()
 
     def ctc(self):
