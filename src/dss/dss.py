@@ -166,7 +166,7 @@ class DssPipeline:
 
     def write_output(self):
         """Write the output of the pipeline to files. Depends on the CTC beam search stage.
-                """
+        """
         if self.word_image_data is None:
             self.word_segment()
         if self.words is None:
