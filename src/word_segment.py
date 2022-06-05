@@ -13,7 +13,18 @@ from tqdm import tqdm
 from src.utils.imutils import consecutive, crop
 
 
-def reduce_optimally(image: np.ndarray, max_angle: int = 20, min_angle: int = -20, angle_step: int = 1, min_consec: int = 20, axis: int = 0):
+def reduce_optimally(image: np.ndarray, max_angle: int = 20, min_angle: int = -20, angle_step: int = 1,
+                     min_consec: int = 20, axis: int = 0):
+    """Perform an optimal reduction by rotating the image between a range of angles.
+
+    :param image: The source image.
+    :param max_angle: The maximum angle to rotate around.
+    :param min_angle: The minimum angle to rotate around.
+    :param angle_step: The angle step to use when rotating.
+    :param min_consec: The minimum consecutive zeros for a valley to be considered a word bound.
+    :param axis: The axis to reduce on.
+    :return: The word bounds, along with the angle that constituted for the optimal rotation.
+    """
     best_bounds = []
     best_angle = 0
     best = 0
@@ -36,6 +47,17 @@ def reduce_optimally(image: np.ndarray, max_angle: int = 20, min_angle: int = -2
 
 def word_segment(image: np.ndarray, min_nonzero_px: int, max_angle: int, min_angle: int, angle_step: int,
                  min_consec: int):
+    """Given a source image, return the segmented word images.
+
+    :param image: The source image.
+    :param min_nonzero_px: The minimum amount of nonzero pixels that have to be found in an image for it to be
+        considered a word image.
+    :param max_angle: The maximum angle to rotate around.
+    :param min_angle: The minimum angle to rotate around.
+    :param angle_step: The angle step to use when rotating.
+    :param min_consec: The minimum consecutive zeros for a valley to be considered a word bound.
+    :return: The segmented word images.
+    """
     bounds, angle = reduce_optimally(image, max_angle=max_angle, min_angle=min_angle, angle_step=angle_step,
                                      min_consec=min_consec, axis=0)
     rotated_img = rotate_bound(image, angle)
@@ -63,9 +85,15 @@ class WordSegmenter:
         self.store_dir = Path(store_dir)
 
     def is_saved_on_disk(self):
+        """Returns whether the word segmentation is saved on dist (in `self.store_dir`)
+        """
         return self.store_dir.exists()
 
     def load_from_disk(self):
+        """Loads the word segmentation from disk.
+
+        :return: All the word images and their data.
+        """
         all_word_images = []
         all_word_image_data = []
         filenames = list(self.store_dir.glob('**/*.jpg'))
@@ -85,6 +113,13 @@ class WordSegmenter:
         return all_word_images, all_word_image_data
 
     def segment_line_images(self, images, data, save):
+        """Segments the line images and saves them to disk.
+
+        :param images: The line images.
+        :param data: The data for the line images.
+        :param save: Whether to save the segmented line images to disk.
+        :return: The segmented line images and their data.
+        """
         if self.store_dir.exists() and save:
             shutil.rmtree(self.store_dir)
         word_ims_per_im = (self._segment(im) for im in images)
@@ -96,7 +131,8 @@ class WordSegmenter:
                 directory = self.store_dir / curr_im_data.name / f'line-{curr_im_data.line}'
             else:
                 directory = self.store_dir / curr_im_data.name
-            directory.resolve().mkdir(parents=True, exist_ok=True)
+            if save:
+                directory.resolve().mkdir(parents=True, exist_ok=True)
             for j, word_im in enumerate(word_ims):
                 fn = directory / f'word-{j}.jpg'
                 if save:

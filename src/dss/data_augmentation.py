@@ -525,7 +525,7 @@ def train_test_validation(use_augmented=False, no_validation=False, train_percen
 
 def create_blank_images():
     # Load n-grams for probabilities
-    with open(Path('../../data/dss/ngrams/ngrams_processed.json').resolve(), 'r') as f:
+    with open(Path('ngrams/ngrams_processed.json').resolve(), 'r') as f:
         ngrams = json.load(f)
         uni_grams = ngrams['uni_grams']
         bi_grams = ngrams['bi_grams']
