@@ -32,6 +32,14 @@ HOP_SIZE = WINDOW_SIZE // 4
 
 
 def image_transforms(image, max_height, max_width, number_of_augments):
+    """
+    Method that does the transoforms on the image
+    :param image: Image to be transformed
+    :param max_height: The height to be used for the image
+    :param max_width: The width to be used for the image
+    :param number_of_augments: The number of augmentations to be applied
+    :return: A list of images
+    """
     # Pick Largest Size
     max_height = max_height if max_height > max_width else max_width
     max_width = max_width if max_width > max_height else max_height
@@ -162,6 +170,13 @@ def image_transforms(image, max_height, max_width, number_of_augments):
 
 
 def _image_to_array(image, height, width):
+    """
+    Utility function to convert a binarized array
+    :param image: Image to be converted to a 2D array
+    :param height: The height of the image
+    :param width: The width of the image
+    :return: A 2D array of the image
+    """
     new_im = []
 
     for i in range(height):
@@ -177,6 +192,12 @@ def _image_to_array(image, height, width):
 
 
 def _salt_and_pepper_noise(image_arr, height, width):
+    """
+    Utility function to add salt and pepper noise to an image
+    :param image_arr: The image to add salt and pepper noise to
+    :param height: The height of the image
+    :param width: The width of the image
+    """
     new_im = image_arr.copy()
     num_pixels_black = random.randint(100, int((height*width)/15)) # 5041
     num_pixels_white = random.randint(100, int((height*width)/15)) # 5041
@@ -197,6 +218,11 @@ def _salt_and_pepper_noise(image_arr, height, width):
 
 
 def augment(max_height, max_width):
+    """
+    Main method that does the augments given the images
+    :param max_height: The maximum height of the image
+    :param max_width: The maximum width of the image
+    """
     try:
         os.mkdir(AUGMENTED_PARENT_DIR)
     except OSError as error:
@@ -235,6 +261,9 @@ def augment(max_height, max_width):
 
 
 def crop_images():
+    """
+    Crops the images using bounding boxes
+    """
     try:
         os.mkdir(CROP_PARENT_DIR)
     except OSError as error:
@@ -321,6 +350,10 @@ def crop_images():
 
 
 def determine_largest_size():
+    """
+    Determines the largest size of the images
+    :return: the max height and max width
+    """
     max_image_height = 0
     max_image_width = 0
 
@@ -356,6 +389,9 @@ def determine_largest_size():
 
 
 def threshold():
+    """
+    Method to threshold the images
+    """
     try:
         os.mkdir(THRESHOLD_PARENT_DIR)
     except OSError as error:
@@ -388,6 +424,16 @@ def threshold():
 
 def train_test_validation(use_augmented=False, no_validation=False, train_percent=0.8, test_percent=0.1,
                           validation_percent=0.1, parent_dir=FINAL_PARENT_DIR):
+    """
+    Method to split the data into train, test, and validation
+    :param use_augmented: Boolean that will determine if the augmented data will be used
+    :param no_validation: Boolean that will determine if the validation set will be created
+    :param train_percent: The train percent
+    :param test_percent: The test percent
+    :param validation_percent: The validation percent
+    :param parent_dir: The parent directory to get data from
+    :return:
+    """
     train = []
     test = []
     validation = []
