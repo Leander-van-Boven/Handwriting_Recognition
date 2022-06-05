@@ -1,1 +1,0 @@
-from src.iam.iam import IamPipeline

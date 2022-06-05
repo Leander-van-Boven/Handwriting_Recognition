@@ -1,6 +1,0 @@
-[submodule "data/iam"]
-	path = data/iam
-	url = https://github.com/jesper-sk/hwr-2022-iam-data
-[submodule "data/dss"]
-	path = data/dss
-	url = https://github.com/jesper-sk/hwr-2022-dss-data
