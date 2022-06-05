@@ -31,7 +31,6 @@ class SlidingWindowClassifier:
             offset = (window_width - new_width) // 2
             new_resized[:, offset:offset+new_width, ...] = resized_im
             resized_im = new_resized
-            new_width = window_width
             image_width = window_width
 
         # print('jochie', image_width, window_width, self.hop_size, resized_im.shape, ratio, new_width, image.shape)
@@ -74,7 +73,7 @@ class SlidingWindowClassifier:
         resized, slices = self.resize_and_slice(image)
         mat = np.zeros((len(slices), self.num_classes))
         for i, slice in enumerate(slices):
-            # print('infer mat', slice)
+            # print('infer mat', slice, resized.shape, image.shape)
             mat[i, :] = self.infer_probability_vector(resized[slice])
         return mat
 
