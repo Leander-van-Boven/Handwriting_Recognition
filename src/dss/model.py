@@ -13,7 +13,7 @@ from src.dss.model_architecture import get_model, compile_model
 
 batch_size = 16
 epochs = 25
-num_models = 10
+num_models = 5
 
 parent_dir = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
@@ -164,44 +164,54 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    for i in range(num_models):
-        print(f"[INFO] Constructing Model {i}")
-        model = get_model(verbose=i == 0)
-        compile_model(model)
+    architectures = [val for val in range(1)]
+    big_models = [False, True]
+    dropout_rates = [0.2, 0.4, 0.6, 0.8]
+    last_dense_layer_sizes = [64, 96, 128]
 
-        print("[INFO] Beginning Model Training")
-        # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
-        #                                         save_weights_only=True,
-        #                                         verbose=1)
-        early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-        tb = callbacks.TensorBoard(
-            log_dir=f'models/train_model{i}_logs',
-            histogram_freq=1,
-            write_graph=True,
-            write_images=False,
-            write_steps_per_second=False,
-            update_freq='epoch',
-            profile_batch=0,
-            embeddings_freq=0,
-            embeddings_metadata=None
-        )
-        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=[early_stopping, tb],
-                      batch_size=batch_size,
-                      validation_data=(validation_data, validation_labels))
-        model.save(f'models/trained_model{i}')
+    for architecture, use_big_model, dropout_rate, dense_size \
+            in itertools.product(architectures, big_models, dropout_rates, last_dense_layer_sizes):
+        for i in range(num_models):
+            print(f"[INFO] Constructing Model {i}")
+            model = get_model(
+                arch=architecture,
+                big_model=use_big_model,
+                last_layer_size=dense_size,
+                verbose= i == 0)
+            compile_model(model)
 
-        print("[INFO] Generating Predictions")
-        test_pred_raw = model.predict(test_data)
+            print("[INFO] Beginning Model Training")
+            early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+            # tb = callbacks.TensorBoard(
+            #     log_dir=f'models/train_model{i}_logs',
+            #     histogram_freq=1,
+            #     write_graph=True,
+            #     write_images=False,
+            #     write_steps_per_second=False,
+            #     update_freq='epoch',
+            #     profile_batch=0,
+            #     embeddings_freq=0,
+            #     embeddings_metadata=None
+            # )
+            callbacks = [early_stopping]
+            _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=callbacks,
+                          batch_size=batch_size,
+                          validation_data=(validation_data, validation_labels))
 
-        test_pred = np.argmax(test_pred_raw, axis=1)
-        rounded_labels = np.argmax(test_labels, axis=1)
-        print("[RESULT] Accuracy: %f" % accuracy_score(rounded_labels, test_pred))
-        precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
-        print(f"[RESULT] Precision: {precision}")
-        print(f"[RESULT] Recall: {recall}")
-        print(f"[RESULT] F-Score: {fscore}")
-        print(f"[RESULT] Support: {support}")
-        # Calculate the confusion matrix using sklearn.metrics
-        cm = confusion_matrix(rounded_labels, test_pred)
-        print(cm)
-        plot_confusion_matrix(cm, class_labels)
+            print("[INFO] Generating Predictions")
+            test_pred_raw = model.predict(test_data)
+
+            test_pred = np.argmax(test_pred_raw, axis=1)
+            rounded_labels = np.argmax(test_labels, axis=1)
+            print("[RESULT] Accuracy: %f" % accuracy_score(rounded_labels, test_pred))
+            precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
+            print(f"[RESULT] Precision: {precision}")
+            print(f"[RESULT] Recall: {recall}")
+            print(f"[RESULT] F-Score: {fscore}")
+            print(f"[RESULT] Support: {support}")
+            # Calculate the confusion matrix using sklearn.metrics
+            cm = confusion_matrix(rounded_labels, test_pred)
+            plot_confusion_matrix(cm, class_labels)
+
+            # Only save model if it performs better
+            model.save(f'models/trained_model{i}')

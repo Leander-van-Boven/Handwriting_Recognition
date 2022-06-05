@@ -26,33 +26,48 @@ from keras.layers import BatchNormalization
 #     return model
 
 
-def get_model(num_classes=28, input_shape=(71, 40, 1), verbose: bool = False):
+def get_model(num_classes=28,
+              input_shape=(71, 40, 1),
+              arch:int = 0,
+              big_model:bool = False,
+              dropout_rate:float = 0.5,
+              last_layer_size:int = 96,
+              activation_function = PReLU(),
+              verbose: bool = False):
     model = Sequential()
-    model.add(Conv2D(filters=32, kernel_size=2, activation=PReLU(), input_shape=input_shape))
-    model.add(BatchNormalization())
-    model.add(Conv2D(filters=32, kernel_size=3, activation=PReLU()))
-    model.add(BatchNormalization())
-    model.add(Conv2D(filters=32, kernel_size=5, strides=2, padding='same', activation=PReLU()))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
 
-    model.add(Conv2D(filters=64, kernel_size=2, activation=PReLU()))
-    model.add(BatchNormalization())
-    model.add(Conv2D(filters=64, kernel_size=3, activation=PReLU()))
-    model.add(BatchNormalization())
-    model.add(Conv2D(filters=64, kernel_size=5, strides=2, padding='same', activation=PReLU()))
-    model.add(BatchNormalization())
-    model.add(Dropout(0.4))
+    if arch == 0:
+        model.add(Conv2D(filters=32, kernel_size=2, activation=activation_function, input_shape=input_shape))
+        model.add(BatchNormalization())
+        if big_model:
+            model.add(Conv2D(filters=32, kernel_size=3, activation=activation_function))
+            model.add(BatchNormalization())
+            model.add(Conv2D(filters=32, kernel_size=5, strides=2, padding='same', activation=activation_function))
+            model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
 
-    model.add(Conv2D(filters=128, kernel_size=3, activation=PReLU()))
-    model.add(BatchNormalization())
-    # model.add(Conv2D(filters=128, kernel_size=3, activation=PReLU()))
-    # model.add(BatchNormalization())
-    model.add(Flatten())
-    model.add(Dropout(0.4))
-    model.add(Dense(96, activation=PReLU()))
-    model.add(Dropout(0.4))
-    model.add(Dense(num_classes, activation='softmax'))
+        model.add(Conv2D(filters=64, kernel_size=2, activation=activation_function))
+        model.add(BatchNormalization())
+        if big_model:
+            model.add(Conv2D(filters=64, kernel_size=3, activation=activation_function))
+            model.add(BatchNormalization())
+            model.add(Conv2D(filters=64, kernel_size=5, strides=2, padding='same', activation=activation_function))
+            model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
+
+        model.add(Conv2D(filters=128, kernel_size=3, activation=activation_function))
+        model.add(BatchNormalization())
+        model.add(Flatten())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(last_layer_size, activation=activation_function))
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(num_classes, activation='softmax'))
+
+    elif arch == 1:
+        # create different architecture
+        pass
+
+    # create more archs...
 
     if verbose:
         print(model.summary())
