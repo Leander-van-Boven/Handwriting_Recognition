@@ -48,7 +48,7 @@ class IamPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = load_model('src/iam/models/best_model')
+        self.model = None
         self.predictions = None
 
         # final CTC application fields
@@ -136,6 +136,7 @@ class IamPipeline:
     def classify(self):
         if self.word_images is None:
             self.word_segment()
+        self.model = load_model('src/iam/models/best_model')
         classifier = SlidingWindowClassifier(self.model, len(self.characters) + 1, self.word_images,
                                              False, self.conf.classification)
         self.predictions = classifier.classify_all()

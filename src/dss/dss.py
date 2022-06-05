@@ -55,7 +55,7 @@ class DssPipeline:
         # classification fields
         # self.model = get_model()
         # self.model.load_weights('src/dss/models/models.ckpt')
-        self.model = load_model('src/dss/models/best_model')
+        self.model = None
         self.predictions = None
 
         # final CTC application fields
@@ -137,6 +137,7 @@ class DssPipeline:
         if self.word_images is None:
             self.word_segment()
 
+        self.model = load_model('src/dss/models/best_model')
         classifier = SlidingWindowClassifier(self.model, len(self.hebrew_characters) + 1, self.word_images,
                                              True, self.conf.classification)
         self.predictions = classifier.classify_all()
