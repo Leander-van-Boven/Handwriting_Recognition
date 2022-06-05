@@ -4,8 +4,8 @@ import string
 
 from src.utils.ngram_utils import uni_bi_grams_probs_from_freqs, save_uni_bi_grams
 
-lines_path = Path('./data/iam/iam_lines_gt.txt').resolve()
-ngram_out_path = Path('./data/iam/ngrams/ngrams_processed.json').resolve()
+lines_path = Path('../../data/iam/iam_lines_gt.txt').resolve()
+ngram_out_path = Path('../../data/iam/ngrams/ngrams_processed.json').resolve()
 
 
 def create_ngrams():
@@ -20,7 +20,7 @@ def create_ngrams():
     def remove_punctuation(line):
         res = ""
         for char in line:
-            if char not in string.punctuation and char not in string.digits:
+            if char not in string.punctuation:
                 res += char
         return res
     punc_free_lines = [remove_punctuation(line) for line in parsed_lines]
@@ -29,8 +29,9 @@ def create_ngrams():
     all_words = [[word for word in line.split(' ') if word != ''] for line in punc_free_lines]
 
     # init uni-grams and bi-grams
-    uni_grams = {uni_char: 0 for uni_char in string.ascii_letters}
-    bi_grams = {uni_char: {bi_char: 0 for bi_char in string.ascii_letters} for uni_char in string.ascii_letters}
+    uni_grams = {uni_char: 0 for uni_char in string.ascii_letters + string.digits}
+    bi_grams = {uni_char: {bi_char: 0 for bi_char in string.ascii_letters + string.digits}
+                for uni_char in string.ascii_letters + string.digits}
 
     # Calculate uni-gram and bi-gram frequencies
     for line in all_words:
