@@ -204,7 +204,10 @@ if __name__ == "__main__":
         _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=[early_stopping, tb],
                       batch_size=batch_size,
                       validation_data=(validation_data, validation_labels))
-        model.save(f'models/trained_model{i}')
+        try:
+            model.save(f'models/trained_model{i}')
+        except:
+            print("[ERROR] Could not save model")
 
         print("[INFO] Generating Predictions")
         test_pred_raw = model.predict(test_data)

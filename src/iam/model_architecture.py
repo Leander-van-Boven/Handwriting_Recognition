@@ -1,5 +1,6 @@
-from tensorflow.python.keras import models, layers, losses, Model
+from tensorflow.python.keras import models, layers, losses, Model, Sequential
 from tensorflow.keras.layers import Dense
+from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Flatten, PReLU
 from tensorflow.python.keras.losses import CategoricalCrossentropy
 from keras.applications.efficientnet_v2 import EfficientNetV2B3
 
@@ -30,17 +31,36 @@ from keras.applications.efficientnet_v2 import EfficientNetV2B3
 #     return None
 
 
-def get_model(num_classes=63, input_shape=(128, 64, 3), transfer_learning=True, verbose=False):
-    base_model = EfficientNetV2B3(
-        include_top=False,
-        weights='imagenet',
-        input_tensor=None,
-        input_shape=input_shape,
-        pooling='max'
-    )
-    base_model.trainable = not transfer_learning
-    output_layer = Dense(num_classes, activation='softmax')(base_model.output)
-    model = Model(inputs=base_model.input, outputs=output_layer)
+# def get_model(num_classes=63, input_shape=(128, 64, 3), transfer_learning=True, verbose=False):
+#     base_model = EfficientNetV2B3(
+#         include_top=False,
+#         weights='imagenet',
+#         input_tensor=None,
+#         input_shape=input_shape,
+#         pooling='max'
+#     )
+#     # base_model.trainable = not transfer_learning
+#     base_model.trainable = True
+#     output_layer = Dense(num_classes, activation='softmax')(base_model.output)
+#     model = Model(inputs=base_model.input, outputs=output_layer)
+#
+#     if verbose:
+#         print(model.summary())
+#
+#     return model
+
+
+def get_model(num_classes=63, input_shape=(128, 64, 3), verbose=False):
+    model = Sequential()
+
+    model.add(Conv2D(32, 3, input_shape=input_shape))
+    model.add(MaxPooling2D(2, 2))
+    model.add(Conv2D(64, 3))
+    model.add(MaxPooling2D(2, 2))
+    model.add(Flatten(input_shape=(28, 28, 1)))
+    model.add(Dense(128, activation=PReLU()))
+    # model.add(Dense(64, activation=PReLU()))
+    model.add(Dense(num_classes, activation='softmax'))
 
     if verbose:
         print(model.summary())
