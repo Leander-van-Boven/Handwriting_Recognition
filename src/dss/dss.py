@@ -1,11 +1,8 @@
 import json
-import os
 import shutil
 from pathlib import Path
-from typing import Union
 
 import cv2 as cv
-import numpy as np
 from attrdict import AttrDict
 from ctc_decoder import beam_search
 from tensorflow.python.keras.models import load_model
@@ -20,6 +17,8 @@ from src.utils.custom_language_model import CustomLanguageModel
 
 
 class DssPipeline:
+    """The class wrapping over the entire pipeline of the DSS task.
+    """
     STAGES = [
         'line_segment',
         'word_segment',
@@ -53,8 +52,6 @@ class DssPipeline:
         self.word_image_data = None
 
         # classification fields
-        # self.model = get_model()
-        # self.model.load_weights('src/dss/models/models.ckpt')
         self.model = None
         self.predictions = None
 
@@ -66,9 +63,14 @@ class DssPipeline:
         self.words = None
 
     def pipeline(self):
+        """Run the entire recognition pipeline.
+        """
         self.write_output()
 
     def run_stage_or_full(self, stage: str):
+        """Run only one stage (and its dependencies) of the pipeline. Running stage \"full\" is identical to running
+        the entire pipeline.
+        """
         if stage == 'full':
             self.pipeline()
         elif stage not in self.STAGES:
@@ -77,18 +79,24 @@ class DssPipeline:
             eval('self.' + stage)()
 
     def _get_scrolls(self):
+        """Get the Dead Sea Scrolls to run the recognizer on.
+        """
         files = list(self.source_dir.glob(self.glob))
         self.scrolls = [preprocessed(cv.imread(str(file)), self.conf.threshold) for file in
                         tqdm(files, desc='Loading scroll images from disk')]
         self.scroll_names = [file.name.split('.')[0] for file in files]
 
     def _get_test_data(self):
+        """Get the testing data to evaluate recognition performance.
+        """
         files = list(self.source_dir.glob('test_results/*_characters.txt'))
         self.answers = {}
         for file in files:
             self.answers[file.name.split('_')[0]] = file.read_text(encoding='utf-8')
 
     def line_segment(self):
+        """Run the line segmentation stage of the pipeline. This stage has no dependencies.
+        """
         if self.scrolls is None:
             self._get_scrolls()
         segmenter = LineSegmenter(self.conf.segmentation.line[1], self.store_dir / 'line_segmented')
@@ -96,6 +104,8 @@ class DssPipeline:
                                                                            self.save_intermediate)
 
     def word_segment(self):
+        """Run the word segmentation stage of the pipeline. This stage depends on the line segmentation stage.
+        """
         segmenter = WordSegmenter(self.conf.segmentation.word[0], self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and self.load_intermediate:
             self.word_images, self.word_image_data = segmenter.load_from_disk()
@@ -106,6 +116,8 @@ class DssPipeline:
                 segmenter.segment_line_images(self.line_images, self.line_image_data, self.save_intermediate)
 
     def segment_statistics(self):
+        """Print the statistics of the segmentation stages. Returns the amount of segmented lines and words and, if
+        available, the actual amount of words and lines of the respective input images."""
         if self.word_image_data is None:
             self.word_segment()
 
@@ -134,6 +146,8 @@ class DssPipeline:
             print()
 
     def classify(self):
+        """Run the sliding window classification step of the pipeline. Depends on the word segmentation stage.
+        """
         if self.word_images is None:
             self.word_segment()
 
@@ -143,13 +157,16 @@ class DssPipeline:
         self.predictions = classifier.classify_all()
 
     def ctc(self):
+        """Run the CTC beam search stage of the pipeline. Depends on the sliding window classification stage.
+        """
         if self.predictions is None:
             self.classify()
         self.words = [beam_search(matrix, ''.join(self.hebrew_characters), lm=self.dss_language_model)
                       for matrix in tqdm(self.predictions, desc='Decoding probability matrices')]
 
     def write_output(self):
-        # TODO: check if right-to-left order is correct
+        """Write the output of the pipeline to files. Depends on the CTC beam search stage.
+                """
         if self.word_image_data is None:
             self.word_segment()
         if self.words is None:

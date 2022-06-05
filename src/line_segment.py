@@ -2,7 +2,7 @@ import shutil
 from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Union, List, Tuple, Optional
+from typing import Union
 
 import cv2 as cv
 import numpy as np
@@ -13,6 +13,13 @@ from src.utils.imutils import projection_profile, valleys_from_profile, crop, ge
 
 
 def segment(img, start_f=.25, proj_thresh=np.Inf, step=15):
+    """Segment the source image into lines.
+
+    :param img: The source image.
+    :param start_f: The start fraction to use when looking for the initial amount of lines.
+    :param proj_thresh: The threshold to use when determining whether a valley is a line bound.
+    :param step: The step (in pixels) to determine the slice width with, used to make projection profiles.
+    """
     hor = cv.reduce(img // 255, 0, cv.REDUCE_SUM, dtype=cv.CV_32S).flatten()
     stind = np.argmax(hor) + 10
     np.clip(stind, 0, img.shape[1])
@@ -25,6 +32,13 @@ def segment(img, start_f=.25, proj_thresh=np.Inf, step=15):
     lines = lines.astype('int32')
 
     def do_lines(i, prev_lines, slice):
+        """Line segmentation step for a single line column. Appends to the `lines` numpy array.
+
+        :param i: Column index.
+        :param prev_lines: The line bound indices of the previous column.
+        :param slice: The image slice associated with the current column.
+        :return: void
+        """
         for j, prev in enumerate(prev_lines):
             if slice[prev, 0] == 0:
                 lines[j, i] = prev
@@ -49,6 +63,12 @@ def segment(img, start_f=.25, proj_thresh=np.Inf, step=15):
 
 
 def images_from_lines_with_ccs(img, lines):
+    """From a source image and line bounds, return the line images. Employs connected components.
+
+    :param img: The source image.
+    :param lines: The line bounds.
+    :return: The list of line images.
+    """
     ccs = get_ccs_from_image(img)
     ccs = [cc for cc in ccs if 60 <= cc.a <= 1e5]
     ims = []
@@ -63,22 +83,6 @@ def images_from_lines_with_ccs(img, lines):
     return ims
 
 
-def images_from_lines(img, lines):
-    ims = []
-    for i in range(len(lines)+1):
-        curr = lines[i] if i < len(lines) else np.array([img.shape[0]]*img.shape[1])
-        prev = lines[i-1] if i > 0 else np.array([0]*img.shape[1])
-        lb = min(prev[1:])
-        ub = max(curr[1:])
-        im = np.zeros((ub-lb, img.shape[1]), dtype=np.uint8)
-        for j, (low, up) in enumerate(zip(prev, curr)):
-            if j == 0:
-                continue
-            im[low-lb:up-lb, j] = img[low:up, j]
-        ims.append(im)
-    return ims
-
-
 class LineSegmenter:
     def __init__(self, conf: AttrDict, store_dir: Union[Path, str]):
         self._segment = partial(segment)
@@ -87,6 +91,12 @@ class LineSegmenter:
         self.store_dir = Path(store_dir).resolve()
 
     def segment_scrolls(self, images, names, save):
+        """Segment a list of scroll images.
+
+        :param images: The source images.
+        :param names: The image names.
+        :return: The line images, as well as the segmentation data.
+        """
         if self.store_dir.exists() and save:
             shutil.rmtree(self.store_dir)
         line_ims_per_im = (self.segment_image(im) for im in images)
@@ -106,6 +116,11 @@ class LineSegmenter:
         return all_line_images, line_image_data
 
     def segment_image(self, im):
+        """Segment an individual image.
+
+        :param im: The source image.
+        :return: The line bounds.
+        """
         im, _ = crop(im)
         lines = self._segment(im)
         im_lines = images_from_lines_with_ccs(im, lines)

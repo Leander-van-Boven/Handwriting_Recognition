@@ -4,7 +4,17 @@ from tqdm import tqdm
 
 
 class SlidingWindowClassifier:
+    """A classifier employing a keras model, using a slicing window on the line or word images.
+    """
     def __init__(self, model, num_classes, word_images, right_to_left, conf):
+        """Create a new instance.
+
+        :param model: The model to use.
+        :param num_classes: The amount of output classes.
+        :param word_images: The word images to classify.
+        :param right_to_left: Whether to run the window right to left.
+        :param conf: The config AttrDict.
+        """
         self.model = model
         self.num_classes = num_classes
         self.word_images = word_images
@@ -14,6 +24,11 @@ class SlidingWindowClassifier:
         self.channels = conf.window.channels
 
     def resize_and_slice(self, image):
+        """Resizes the source image to fit the window, and creates the window slices.
+
+        :param image: The source image
+        :return: The resized image, as well as the slices.
+        """
         assert self.hop_size > 0
 
         ratio = self.window_size[0] / image.shape[0]
@@ -52,6 +67,11 @@ class SlidingWindowClassifier:
         return resized_im, slices
 
     def infer_probability_vector(self, window: np.ndarray) -> np.ndarray:
+        """Use the keras model to infer a character probability matrix from a window.
+
+        :param window: The window image.
+        :return: The probability vector, as a column vector.
+        """
         if self.model is None:
             return np.random.rand(self.num_classes)
         if len(window.shape) == 3: # (71, 40, 3) --> (71, 40)
@@ -62,6 +82,11 @@ class SlidingWindowClassifier:
         return predictions
 
     def infer_probability_matrix(self, image):
+        """Use the sliding window to infer probability matrix of an input image.
+
+        :param image: The source image.
+        :return: The probability matrix.
+        """
         resized, slices = self.resize_and_slice(image)
         mat = np.zeros((len(slices), self.num_classes))
         for i, slice in enumerate(slices):
@@ -70,4 +95,8 @@ class SlidingWindowClassifier:
         return mat
 
     def classify_all(self):
+        """Classify the provided list of images from the constructor.
+
+        :return: The list of probability matrices.
+        """
         return [self.infer_probability_matrix(image) for image in tqdm(self.word_images, desc='Encoding images')]
