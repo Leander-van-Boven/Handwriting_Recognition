@@ -15,7 +15,10 @@ ngram_hebrew_out_path = Path('ngrams/ngrams_hebrew_processed.json').resolve()
 character_path = Path('../../data/dss/characters').resolve()
 
 
-def create_ngrams(verbose: bool = False):
+def create_ngrams():
+    """Create ngrams from raw ngram counts, and writes them to a json file.
+    """
+
     if not exists(ngram_in_path):
         raise FileNotFoundError(ngram_in_path)
     ngrams_pd = pd.read_csv(ngram_in_path, usecols=['Names', 'Frequencies'])
@@ -24,8 +27,6 @@ def create_ngrams(verbose: bool = False):
     if not exists(character_path):
         raise FileNotFoundError(character_path)
     character_dirs = os.listdir(character_path)
-    if verbose:
-        print('Characters:', character_dirs)
 
     # fix inconsistencies / typos
     def ngram_char_to_char_dir(char):
@@ -71,4 +72,4 @@ def create_ngrams(verbose: bool = False):
 
 
 if __name__ == '__main__':
-    create_ngrams(verbose=True)
+    create_ngrams()

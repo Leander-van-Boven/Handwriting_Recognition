@@ -20,7 +20,7 @@ class CSVWriter:
 if __name__ == "__main__":
     CSV = CSVWriter("../tmp",
                     ["Fruit", "Color", "Price"],
-                    [["Apple", "Red", 5.0],
+                    [["Apple", "Red", [5.0, 2.0, 3.0]],
                      ["Orange", "Orange", 3.0],
                      ["Apple", "Green", 4.0],
                      ["Mango", "Orange - Red", 7.0],

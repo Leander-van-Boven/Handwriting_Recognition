@@ -13,21 +13,27 @@ from tqdm import tqdm
 from src.iam.model_architecture import get_model, compile_model
 from src.utils.csv_writer import CSVWriter
 
+
+# globals
 batch_size = 64
 epochs = 20
 num_models = 3
+num_images = (1536, 192, 192)
+WINDOW_SIZE = 64
 
+# paths
 parent_dir = Path('../../data/iam/IMData_Split').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
 TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
-num_images = (1536, 192, 192)
-
-WINDOW_SIZE = 64
 
 
-# label files are one hot encoded
 def read_in_data():
+    """Reads in the data from the directories and returns the data and labels.
+    :return: train_ds, train_labels, test_ds, test_labels, validation_ds, validation_labels, class_names
+    """
+
+    # initiate variables
     letters = []
 
     train_ds = []
@@ -41,17 +47,8 @@ def read_in_data():
     for letter in os.listdir(TRAIN_PATH):
         letters.append(letter)
 
-    # one_hot_encoded_labels = []
-    # for i in range(len(letters)):  # == list of 63
-    #     tmp = []
-    #     for j in range(len(letters)):
-    #         if j == i:
-    #             tmp.append(1)
-    #         else:
-    #             tmp.append(0)
-    #     one_hot_encoded_labels.append(tmp)
+    # labels are one hot encoded
     ascii_characters = string.ascii_letters + string.digits
-
     def hex_char_to_one_hot(hex_char):
         zeros = np.zeros(len(ascii_characters) + 1)
         if hex_char == 'ZBlank':
@@ -59,21 +56,16 @@ def read_in_data():
         else:
             zeros[ascii_characters.index(chr(int(hex_char, 16)))] = 1
         return zeros
-
     one_hot_encoded_labels = {
         hex_char: hex_char_to_one_hot(hex_char) for hex_char in letters
     }
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(TRAIN_PATH), desc='Reading in Training Data'):
-        #tmp = []
         image_folder = os.path.join(TRAIN_PATH, letter)
         for counter, im_file in enumerate(os.listdir(image_folder)):
-            #image = cv2.imread(os.path.join(image_folder, im_file))
-            #tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
             image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
@@ -82,19 +74,14 @@ def read_in_data():
             image_arr = np.where(image_arr == 0, 1, 0)
             train_ds.append(image_arr)
             train_labels.append(one_hot_encoded_labels[letter])
-        #train_ds.append(tmp)
-        ENUMERATOR += 1
+        enumerator += 1
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(TEST_PATH), desc='Reading in Test Data'):
         image_folder = os.path.join(TEST_PATH, letter)
-        tmp = []
         for im_file in os.listdir(image_folder):
-            #image = cv2.imread(os.path.join(image_folder, im_file))
-            #tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
             image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
@@ -103,20 +90,14 @@ def read_in_data():
             image_arr = np.where(image_arr == 0, 1, 0)
             test_ds.append(image_arr)
             test_labels.append(one_hot_encoded_labels[letter])
-        # test_ds.append(tmp)
-        ENUMERATOR += 1
+        enumerator += 1
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(VALIDATION_PATH), desc='Reading in Validation Data'):
         image_folder = os.path.join(VALIDATION_PATH, letter)
-        tmp = []
         for im_file in os.listdir(image_folder):
-            #image = cv2.imread(os.path.join(image_folder, im_file))
-
-            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            #tmp.append(image_arr)
             # Get WINDOW_SIZE wide window and normalize
             padding = (image_arr.shape[1] - WINDOW_SIZE) // 2
             image_arr = image_arr[:, padding:padding+WINDOW_SIZE] // 255
@@ -125,14 +106,18 @@ def read_in_data():
             image_arr = np.where(image_arr == 0, 1, 0)
             validation_ds.append(image_arr)
             validation_labels.append(one_hot_encoded_labels[letter])
-        #validation_ds.append(tmp)
-        ENUMERATOR += 1
+        enumerator += 1
 
     return np.array(train_ds), np.array(train_labels), np.array(test_ds), np.array(test_labels), \
            np.array(validation_ds), np.array(validation_labels), np.array(letters)
 
 
 def shuffle_data(train_ds, train_labels):
+    """Shuffles the data and labels
+    :param train_ds: training data
+    :param train_labels: training labels
+    :return: shuffled data and labels
+    """
     assert len(train_ds) == len(train_labels)
     p = np.random.permutation(len(train_ds))
     return train_ds[p], train_labels[p]
@@ -141,8 +126,7 @@ def shuffle_data(train_ds, train_labels):
 # adapted from
 # https://towardsdatascience.com/exploring-confusion-matrix-evolution-on-tensorboard-e66b39f4ac12
 def plot_confusion_matrix(cm, class_names):
-    """
-    Returns a matplotlib figure containing the plotted confusion matrix.
+    """Returns a matplotlib figure containing the plotted confusion matrix.
 
     Args:
        cm (array, shape = [n, n]): a confusion matrix of integer classes
@@ -181,13 +165,14 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
+    # define parameter-sweep
     architectures = [val for val in range(2)]
     dropout_rates = [0.2, 0.4, 0.6]
     last_dense_layer_sizes = [96, 128, 256]
     learning_rates = [0.001, 0.01, 0.1]
 
+    # param sweep result aggregation
     best_model = (None, 0, '')
-
     column_headings = ['Architecture', 'Dropout Rate', 'Last Dense Layer Size', 'Learning Rate',
                        'Accuracy', 'Precision', 'Recall', 'F Score', 'Support']
     run_details = []
@@ -199,13 +184,17 @@ if __name__ == "__main__":
 
         for i in range(num_models):
             print(f"[INFO] Constructing Model {i}")
-            model = get_model(verbose=i == 0)
+
+            model = get_model(
+                arch=architecture,
+                last_layer_size=dense_size,
+                verbose=i == 0,
+                dropout_rate=dropout_rate)
+            # model = get_model(verbose=i == 0)
+
             compile_model(model, learning_rate)
 
             print("[INFO] Beginning Model Training")
-            # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
-            #                                         save_weights_only=True,
-            #                                         verbose=1)
             early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
             # tb = TensorBoard(
             #     log_dir=f'models/train_model{i}_logs',
@@ -261,7 +250,7 @@ if __name__ == "__main__":
     print(f"[INFO] Saving Best Model {best_model[2]}")
     best_model[0].save(f'models/best_model_sweep')
 
-    csv = CSVWriter(filename='dss_results',
+    csv = CSVWriter(filename='iam_results',
                     column_names=column_headings,
                     data_values=run_details
                     )

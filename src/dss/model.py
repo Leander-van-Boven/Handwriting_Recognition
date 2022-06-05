@@ -3,7 +3,6 @@ from pathlib import Path
 
 from sklearn.metrics import confusion_matrix, accuracy_score, precision_recall_fscore_support
 from matplotlib import pyplot as plt
-from tensorflow.python.keras import callbacks
 import os
 import PIL
 from tensorflow.python.keras.callbacks import EarlyStopping, TensorBoard
@@ -13,19 +12,26 @@ import numpy as np
 from src.dss.model_architecture import get_model, compile_model
 from src.utils.csv_writer import CSVWriter
 
+
+# globals
 batch_size = 32
 epochs = 20
-num_models = 3
+num_models = 2
+num_images = (1014, 234, 234)
 
+# paths
 parent_dir = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
 TEST_PATH = os.path.join(parent_dir, 'Test')
 VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
-num_images = (1014, 234, 234)
 
 
-# label files are one hot encoded
 def read_in_data():
+    """Reads in the data from the directories and returns the data and labels.
+    :return: train_ds, train_labels, test_ds, test_labels, validation_ds, validation_labels, class_names
+    """
+
+    # initiate variables
     letters = []
 
     train_ds = []
@@ -39,6 +45,7 @@ def read_in_data():
     for letter in os.listdir(TRAIN_PATH):
         letters.append(letter)
 
+    # labels are one hot encoded
     one_hot_encoded_labels = []
     for i in range(len(letters)):  # == list of 28
         tmp = []
@@ -49,75 +56,64 @@ def read_in_data():
                 tmp.append(0)
         one_hot_encoded_labels.append(tmp)
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(TRAIN_PATH), desc='Reading in Training Data'):
-        # tmp = []
         image_folder = os.path.join(TRAIN_PATH, letter)
         for counter, im_file in enumerate(os.listdir(image_folder)):
             if counter >= num_images[0]:  # 26*39
                 break
-            # image = cv2.imread(os.path.join(image_folder, im_file))
-            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            # tmp.append(image_arr)
             # Get 40 wide window and normalize
             image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             train_ds.append(image_arr)
-            train_labels.append(one_hot_encoded_labels[ENUMERATOR])
-        # train_ds.append(tmp)
-        ENUMERATOR += 1
+            train_labels.append(one_hot_encoded_labels[enumerator])
+        enumerator += 1
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(TEST_PATH), desc='Reading in Test Data'):
         image_folder = os.path.join(TEST_PATH, letter)
-        tmp = []
         for counter, im_file in enumerate(os.listdir(image_folder)):
             if counter >= num_images[2]:  # 26*7
                 break
-            # image = cv2.imread(os.path.join(image_folder, im_file))
-            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            # tmp.append(image_arr)
             # Get 40 wide window and normalize
             image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             test_ds.append(image_arr)
-            test_labels.append(one_hot_encoded_labels[ENUMERATOR])
-        # test_ds.append(tmp)
-        ENUMERATOR += 1
+            test_labels.append(one_hot_encoded_labels[enumerator])
+        enumerator += 1
 
-    ENUMERATOR = 0
+    enumerator = 0
     for letter in tqdm(os.listdir(VALIDATION_PATH), desc='Reading in Validation Data'):
         image_folder = os.path.join(VALIDATION_PATH, letter)
-        tmp = []
         for counter, im_file in enumerate(os.listdir(image_folder)):
             if counter >= num_images[1]:  # 26*7
                 break
-            # image = cv2.imread(os.path.join(image_folder, im_file))
-
-            # tmp.append(image)
             image = PIL.Image.open(os.path.join(image_folder, im_file))
             image_arr = np.array(image)
-            # tmp.append(image_arr)
             # Get 40 wide window and normalize
             image_arr = np.expand_dims(image_arr[:, 15:55, 0] // 255, axis=2)
             # Invert image to make black background white
             image_arr = np.where(image_arr == 0, 1, 0)
             validation_ds.append(image_arr)
-            validation_labels.append(one_hot_encoded_labels[ENUMERATOR])
-        # validation_ds.append(tmp)
-        ENUMERATOR += 1
+            validation_labels.append(one_hot_encoded_labels[enumerator])
+        enumerator += 1
 
     return np.array(train_ds), np.array(train_labels), np.array(test_ds), np.array(test_labels), \
            np.array(validation_ds), np.array(validation_labels), np.array(letters)
 
 
 def shuffle_data(train_ds, train_labels):
+    """Shuffles the data and labels
+    :param train_ds: training data
+    :param train_labels: training labels
+    :return: shuffled data and labels
+    """
     assert len(train_ds) == len(train_labels)
     p = np.random.permutation(len(train_ds))
     return train_ds[p], train_labels[p]
@@ -126,8 +122,7 @@ def shuffle_data(train_ds, train_labels):
 # adapted from
 # https://towardsdatascience.com/exploring-confusion-matrix-evolution-on-tensorboard-e66b39f4ac12
 def plot_confusion_matrix(cm, class_names):
-    """
-    Returns a matplotlib figure containing the plotted confusion matrix.
+    """Returns a matplotlib figure containing the plotted confusion matrix.
 
     Args:
        cm (array, shape = [n, n]): a confusion matrix of integer classes
@@ -166,13 +161,14 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    architectures = [val for val in range(2)]
-    dropout_rates = [0.2, 0.4, 0.6]
-    last_dense_layer_sizes = [64, 96, 128]
-    learning_rates = [0.001, 0.01, 0.1]
+    # define parameter-sweep
+    architectures = [val for val in range(1, 3)]
+    dropout_rates = [0.4]
+    last_dense_layer_sizes = [96]
+    learning_rates = [0.01, 0.1]
 
+    # param sweep result aggregation
     best_model = (None, 0, '')
-
     column_headings = ['Architecture', 'Dropout Rate', 'Last Dense Layer Size', 'Learning Rate',
                        'Accuracy', 'Precision', 'Recall', 'F Score', 'Support']
     run_details = []
@@ -180,7 +176,14 @@ if __name__ == "__main__":
     for architecture, dropout_rate, dense_size, learning_rate \
             in itertools.product(architectures, dropout_rates, last_dense_layer_sizes, learning_rates):
 
+        if architecture == 0 and (dropout_rate == 0.2 or dropout_rate == 0.4) and (dense_size == 64 or dense_size == 96):
+            print("[INFO] Skipping Architecture: {} Dropout Rate: {} Last Dense Layer Size: {} Learning Rate: {}".format(
+                architecture, dropout_rate, dense_size, learning_rate))
+            continue
+
         best_model_i = (None, 0, -1)
+
+        print(f"[INFO] Training models with architecture {architecture}, dropout rate {dropout_rate}, last dense layer size {dense_size}, learning rate {learning_rate}")
 
         for i in range(num_models):
             print(f"[INFO] Constructing Model {i}")
