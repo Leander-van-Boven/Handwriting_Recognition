@@ -29,7 +29,6 @@ from keras.applications.efficientnet_v2 import EfficientNetV2B3
 def get_model(num_classes=63,
               input_shape=(128, 64, 3),
               arch:int = 0,
-              big_model:bool = False,
               dropout_rate:float = 0.4,
               last_layer_size:int = 96,
               activation_function:callable = PReLU,

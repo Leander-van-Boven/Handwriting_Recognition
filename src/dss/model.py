@@ -15,7 +15,7 @@ from src.utils.csv_writer import CSVWriter
 
 batch_size = 32
 epochs = 25
-num_models = 5
+num_models = 3
 
 parent_dir = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')

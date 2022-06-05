@@ -15,7 +15,7 @@ from src.utils.csv_writer import CSVWriter
 
 batch_size = 48
 epochs = 25
-num_models = 10
+num_models = 3
 
 parent_dir = Path('../../data/iam/IMData_Split').resolve()
 TRAIN_PATH = os.path.join(parent_dir, 'Train')
