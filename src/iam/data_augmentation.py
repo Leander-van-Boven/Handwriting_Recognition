@@ -9,7 +9,6 @@ from tqdm import tqdm
 
 from src.iam.model import num_images, WINDOW_SIZE
 
-
 # paths & globals
 FINAL_PARENT_DIR = Path('../../data/iam/IMData_Split').resolve()
 SAVE_EXTENSION = '.jpg'
