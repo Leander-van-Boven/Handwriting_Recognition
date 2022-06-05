@@ -8,9 +8,9 @@ from src.dss.hebrew_unicodes import HebrewUnicodes
 from src.utils.ngram_utils import save_uni_bi_grams, uni_bi_grams_probs_from_freqs
 
 
-ngram_in_path = Path('../../data/dss/ngrams/ngrams_raw.csv').resolve()
-ngram_out_path = Path('../../data/dss/ngrams/ngrams_processed.json').resolve()
-ngram_hebrew_out_path = Path('../../data/dss/ngrams/ngrams_hebrew_processed.json').resolve()
+ngram_in_path = Path('ngrams/ngrams_raw.csv').resolve()
+ngram_out_path = Path('ngrams/ngrams_processed.json').resolve()
+ngram_hebrew_out_path = Path('ngrams/ngrams_hebrew_processed.json').resolve()
 
 character_path = Path('../../data/dss/characters').resolve()
 

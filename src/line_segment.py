@@ -95,10 +95,11 @@ class LineSegmenter:
         for i, line_ims in tqdm(enumerate(line_ims_per_im), total=len(images), desc='Performing line segmentation'):
             curr_im_name = names[i]
             directory = self.store_dir / curr_im_name
-            directory.resolve().mkdir(parents=True, exist_ok=True)
+            if save:
+                directory.resolve().mkdir(parents=True, exist_ok=True)
             for j, line_im in enumerate(line_ims):
-                fn = directory / f'line-{j}.jpg'
                 if save:
+                    fn = directory / f'line-{j}.jpg'
                     cv.imwrite(str(fn), line_im)
                 all_line_images.append(line_im)
                 line_image_data.append(SimpleNamespace(name=curr_im_name, line=j))

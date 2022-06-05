@@ -96,7 +96,8 @@ class WordSegmenter:
                 directory = self.store_dir / curr_im_data.name / f'line-{curr_im_data.line}'
             else:
                 directory = self.store_dir / curr_im_data.name
-            directory.resolve().mkdir(parents=True, exist_ok=True)
+            if save:
+                directory.resolve().mkdir(parents=True, exist_ok=True)
             for j, word_im in enumerate(word_ims):
                 fn = directory / f'word-{j}.jpg'
                 if save:

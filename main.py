@@ -77,7 +77,12 @@ def main():
         pprint(args)
         print('\nconfig:')
         pprint(conf)
-        input('continue?')
+        try:
+            input('continue?')
+        except KeyboardInterrupt:
+            print('\n\nokay then...')
+            import sys
+            sys.exit(42)
 
     args.func(args, conf)
 

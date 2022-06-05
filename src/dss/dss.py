@@ -61,9 +61,8 @@ class DssPipeline:
         self.predictions = None
 
         # final CTC application fields
-        self.hebrew_characters = [HebrewUnicodes.name_to_unicode(char)
-                                  for char in os.listdir(self.source_dir / 'characters')]
-        with open(self.source_dir / 'ngrams' / 'ngrams_hebrew_processed.json', 'r') as ngrams_file:
+        self.hebrew_characters = [HebrewUnicodes.characters()]
+        with open('src/dss/ngrams/ngrams_hebrew_processed.json', 'r') as ngrams_file:
             n_grams = json.load(ngrams_file)
         self.dss_language_model = CustomLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
         self.words = None

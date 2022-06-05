@@ -1,5 +1,5 @@
 #!/bin/bash
 
-export PIPENV_PIPFILE="../Pipfile"
-pipenv shell
-python3 ../main.py -outdir . dss --indir $1 --glob '*'
+DIR=$(realpath "$1")
+cd "${BASH_SOURCE%/*}/.." || exit
+pipenv run python3 main.py --outdir ./dss dss --indir "$DIR" --glob '*binarized.jpg'

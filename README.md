@@ -6,7 +6,7 @@ We assume a Linux environment with Python (3.8), Pipenv and Git installed.
 
 ## Installation
 ```shell
-./install.sh
+./install_full.sh
 ```
 This will initiate and download all submodules that contain all dataset. You have to make sure that you have access to 
 all restricted repositories (containing DSS data) before running this command.
