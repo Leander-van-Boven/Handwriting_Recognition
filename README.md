@@ -78,3 +78,6 @@ $ python3 src/iam/model.py
 ```
 The created model will be saved in src/iam/models. To run the recognizer with this created CNN, replace the files in models/best_model
 with the new files created and run as described above.
+
+Edit past the deadline (commit c33fa69fcd615965ed51e4e97f7b6731994f2d79): change command-line argument in `dss/install.sh` to let it 
+look for all images in target directory.
