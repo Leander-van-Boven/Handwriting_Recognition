@@ -1,4 +1,7 @@
 class HebrewUnicodes:
+    """
+    This class contains the unicodes for Hebrew characters.
+    """
     ALEF = '\u05D0'
     AYIN = '\u05e2'
     BET = '\u05D1'

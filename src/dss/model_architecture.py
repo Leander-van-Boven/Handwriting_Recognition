@@ -4,27 +4,7 @@ from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, PReLU, Softmax, Dropout
 from keras.layers import BatchNormalization
 
-# 5 epochs accuracy 91%
-# 10 epochs same
-# new data only at 90%
-# def get_model(num_classes=28, input_shape=(71, 71, 3)):
-#     model = Sequential()
-#
-#     model.add(Conv2D(filters=96, kernel_size=(3, 3), activation=PReLU(), input_shape=input_shape))
-#     model.add(MaxPooling2D((3, 3), strides=2))
-#     model.add(Conv2D(filters=128, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(MaxPooling2D((3, 3), strides=2))
-#     model.add(Conv2D(filters=160, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(MaxPooling2D((3, 3), strides=2))
-#     model.add(Conv2D(filters=256, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(Conv2D(filters=256, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(Flatten())
-#     model.add(Dense(1024, activation=PReLU()))
-#     # output layer
-#     output_layer = Dense(num_classes, activation=Softmax())
-#     model.add(output_layer)
-#     # model.summary()
-#     return model
+
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 
 
@@ -35,6 +15,18 @@ def get_model(num_classes=28,
               last_layer_size:int = 96,
               activation_function:callable = PReLU,
               verbose: bool = False):
+    """
+    Returns a keras model with the specified architecture.
+    :param num_classes: number of classes
+    :param input_shape: input shape
+    :param arch: architecture number
+    :param dropout_rate: dropout rate
+    :param last_layer_size: size of the last layer
+    :param activation_function: activation function
+    :param verbose: verbose
+    :return: keras model
+    """
+
     model = Sequential()
 
     if arch == 0:
