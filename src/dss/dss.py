@@ -24,8 +24,6 @@ class DssPipeline:
         'line_segment',
         'word_segment',
         'segment_statistics',
-        'classify_augment',
-        'model_train',
         'classify',
         'ctc',
         'write_output',
@@ -134,15 +132,6 @@ class DssPipeline:
             print(key)
             pprint(val)
             print()
-
-    def classify_augment(self):
-        pass
-
-    def classify_train(self):
-        pass
-
-    def classify_test(self):
-        pass
 
     def classify(self):
         if self.word_images is None:

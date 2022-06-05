@@ -44,7 +44,7 @@ def parse_args():
     parser_dss.add_argument('-i', '--indir', type=Path, default='./data/dss', metavar='PATH',
                             help='the directory from which to load the input dataset')
     parser_dss.add_argument('-S', '--stage', choices=DssPipeline.STAGES + ['full'], default='full', metavar='OPT',
-                            help='the stage to execute, full equals to the entire inference pipeline')
+                            help='the stage to execute: ' + ', '.join(DssPipeline.STAGES + ['full']))
     parser_dss.add_argument('-g', '--glob', type=str, default='scrolls/*binarized.jpg', help='the file pattern used to '
                                                                                              'determine the images '
                                                                                              'used as input')
