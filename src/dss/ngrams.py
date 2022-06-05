@@ -17,7 +17,6 @@ character_path = Path('../../data/dss/characters').resolve()
 
 def create_ngrams():
     """Create ngrams from raw ngram counts, and writes them to a json file.
-    :param verbose: Print progress to console.
     """
 
     if not exists(ngram_in_path):
