@@ -1,34 +1,10 @@
 from tensorflow.python.keras import Model, Sequential
 from tensorflow.keras.layers import Dense
+from tensorflow.python.keras.constraints import maxnorm
 from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Flatten, PReLU, Dropout
 from tensorflow.python.keras.losses import CategoricalCrossentropy
+from tensorflow.python.keras.optimizer_v2.adam import Adam
 from keras.applications.efficientnet_v2 import EfficientNetV2B3
-
-
-# def get_model(num_classes=62, input_shape=(128, 128, 3)):
-#     # TODO: add model architecture here
-#     # TODO: input shape to be determined @jesper
-#     # The input shape of the training images of NIST are 128x128
-#     # TODO: should have len(string.ascii_letters + string.digits) classes = 62
-#     model = models.Sequential()
-#
-#     model.add(layers.Conv2D(filters=64, kernel_size=(3, 3), activation=PReLU(), input_shape=input_shape))
-#     model.add(layers.MaxPooling2D((3, 3), strides=2))
-#     model.add(layers.Conv2D(filters=128, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(layers.MaxPooling2D((3, 3), strides=2))
-#     model.add(layers.Conv2D(filters=256, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(layers.MaxPooling2D((3, 3), strides=2))
-#     model.add(layers.Conv2D(filters=512, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(layers.MaxPooling2D((3, 3), strides=2))
-#     model.add(layers.Conv2D(filters=1024, kernel_size=(3, 3), activation=PReLU()))
-#     model.add(layers.MaxPooling2D((3, 3), strides=2))
-#     model.add(layers.Flatten())
-#     model.add(layers.Dense(1024, activation=PReLU))
-#
-#     # output layer
-#     output_layer = layers.Dense(num_classes, activation=Softmax())
-#     model.add(output_layer)
-#     return None
 
 
 # def get_model(num_classes=63, input_shape=(128, 64, 3), transfer_learning=True, verbose=False):
@@ -61,16 +37,16 @@ def get_model(num_classes=63,
     model = Sequential()
 
     if arch == 0:
-        model.add(Conv2D(filters=32, kernel_size=3, input_shape=input_shape))
+        model.add(Conv2D(filters=32, kernel_size=3, input_shape=input_shape, kernel_constraint=maxnorm(3)))
         model.add(activation_function())
         model.add(Dropout(dropout_rate))
         model.add(MaxPooling2D(2, 2))
-        model.add(Conv2D(filters=64, kernel_size=3))
+        model.add(Conv2D(filters=64, kernel_size=3, kernel_constraint=maxnorm(3)))
         model.add(activation_function())
         model.add(Dropout(dropout_rate))
         model.add(MaxPooling2D(2, 2))
         model.add(Flatten())
-        model.add(Dense(last_layer_size))
+        model.add(Dense(last_layer_size, kernel_constraint=maxnorm(3)))
         model.add(activation_function())
         model.add(Dropout(dropout_rate))
         model.add(Dense(num_classes, activation='softmax'))
@@ -87,9 +63,10 @@ def get_model(num_classes=63,
     return model
 
 
-def compile_model(model):
+def compile_model(model, learning_rate=0.001):
+    adam = Adam(learning_rate=learning_rate)
     model.compile(
-        optimizer='adam',
+        optimizer=adam,
         loss=CategoricalCrossentropy(),  # from_logits=True, disabled because of Softmax
         metrics=['accuracy']
     )

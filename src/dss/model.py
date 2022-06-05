@@ -6,14 +6,14 @@ from matplotlib import pyplot as plt
 from tensorflow.python.keras import callbacks
 import os
 import PIL
-from tensorflow.python.keras.callbacks import EarlyStopping
-from tensorflow.python.keras.callbacks_v1 import TensorBoard
+from tensorflow.python.keras.callbacks import EarlyStopping, TensorBoard
 from tqdm import tqdm
 import numpy as np
 
 from src.dss.model_architecture import get_model, compile_model
+from src.utils.csv_writer import CSVWriter
 
-batch_size = 16
+batch_size = 32
 epochs = 25
 num_models = 5
 
@@ -167,17 +167,18 @@ if __name__ == "__main__":
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
     architectures = [val for val in range(1)]
-    # big_models = [False, True]
-    # dropout_rates = [0.2, 0.4, 0.6, 0.8]
-    # last_dense_layer_sizes = [64, 96, 128]
-    big_models = [True]
-    dropout_rates = [0.4]
-    last_dense_layer_sizes = [96]
+    dropout_rates = [0.2, 0.4, 0.6]
+    last_dense_layer_sizes = [64, 96, 128]
+    learning_rates = [0.001, 0.01, 0.1]
 
     best_model = (None, 0, '')
 
-    for architecture, use_big_model, dropout_rate, dense_size \
-            in itertools.product(architectures, big_models, dropout_rates, last_dense_layer_sizes):
+    column_headings = ['Architecture', 'Dropout Rate', 'Last Dense Layer Size', 'Learning Rate',
+                       'Accuracy', 'Precision', 'Recall', 'F Score', 'Support']
+    run_details = []
+
+    for architecture, dropout_rate, dense_size, learning_rate \
+            in itertools.product(architectures, dropout_rates, last_dense_layer_sizes, learning_rates):
 
         best_model_i = (None, 0, -1)
 
@@ -185,13 +186,12 @@ if __name__ == "__main__":
             print(f"[INFO] Constructing Model {i}")
             model = get_model(
                 arch=architecture,
-                big_model=use_big_model,
                 last_layer_size=dense_size,
                 verbose= i == 0)
-            compile_model(model)
+            compile_model(model, learning_rate)
 
             print("[INFO] Beginning Model Training")
-            early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=8, verbose=1)
             # tb = TensorBoard(
             #     log_dir=f'models/train_model{i}_logs',
             #     histogram_freq=1,
@@ -224,6 +224,9 @@ if __name__ == "__main__":
             cm = confusion_matrix(rounded_labels, test_pred)
             plot_confusion_matrix(cm, class_labels)
 
+            run_details.append([architecture, dropout_rate, dense_size, learning_rate,
+                               accuracy, precision, recall, fscore, support])
+
             # Only save model if it performs better
             if accuracy > best_model_i[1]:
                 print(f"[INFO] Model i ({i}) performing better than previous best model i ({best_model_i[2]})")
@@ -233,8 +236,14 @@ if __name__ == "__main__":
             print(f"[INFO] Best model i ({best_model_i[2]}) performing better than previous best model ({best_model[2]})")
             best_model = (
                 *best_model_i,
-                f'{architecture}_{use_big_model}_{dropout_rate * 100}_{dense_size}_{best_model_i[2]}'
+                f'{architecture}_{dropout_rate * 100}_{dense_size}_{learning_rate*1000}_{best_model_i[2]}'
             )
 
-        print(f"[INFO] Saving Best Model {best_model[2]}")
-        best_model[0].save(f'models/best_model_sweep')
+    print(f"[INFO] Saving Best Model {best_model[2]}")
+    best_model[0].save(f'models/best_model_sweep')
+
+    csv = CSVWriter(filename='dss_results',
+                    column_names=column_headings,
+                    data_values=run_details
+                    )
+    csv.create_csv_file()
