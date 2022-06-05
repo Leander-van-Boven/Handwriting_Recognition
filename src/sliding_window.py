@@ -64,7 +64,7 @@ class SlidingWindowClassifier:
         # print(window.shape)
         window = np.repeat(window, self.channels, axis=3)
         # print('infer vec2', window.shape)
-        assert window.shape == (1, 71, 40, self.channels)
+        # assert window.shape == (1, 71, 40, self.channels)
         predictions = self.model.predict(window)[0]
         # print('Predictions shape:', predictions.shape, ' Predictions: ', predictions)
         return predictions

@@ -35,6 +35,6 @@ iam:
         min_consec: 28
   classification:
     window:
-      size: !!python/tuple [71, 71]
+      size: !!python/tuple [128, 64]
       hop_size: 20
       channels: 3
