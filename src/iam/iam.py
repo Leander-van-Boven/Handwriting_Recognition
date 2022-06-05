@@ -18,6 +18,8 @@ from src.word_segment import WordSegmenter
 
 
 class IamPipeline:
+    """The class wrapping over the entire pipeline of the IAM task.
+    """
     TXT_FILE = 'iam_lines_gt.txt'
 
     STAGES = [
@@ -48,20 +50,25 @@ class IamPipeline:
         self.word_image_data = None
 
         # classification fields
-        self.model = load_model('src/iam/models/best_model')
+        self.model = None
         self.predictions = None
 
         # final CTC application fields
         self.characters = alphabet.lower + alphabet.upper + alphabet.digits
-        with open(self.source_dir / 'ngrams' / 'ngrams_processed.json', 'r') as ngrams_file:
+        with open('src/iam/ngrams/ngrams_processed.json', 'r') as ngrams_file:
             n_grams = json.load(ngrams_file)
         self.iam_language_model = CustomLanguageModel(n_grams['uni_grams'], n_grams['bi_grams'])
         self.words = None
 
     def pipeline(self):
+        """Run the entire recognition pipeline.
+        """
         self.write_output()
 
     def run_stage_or_full(self, stage: str):
+        """Run only one stage (and its dependencies) of the pipeline. Running stage \"full\" is identical to running
+        the entire pipeline.
+        """
         if stage == 'full':
             self.pipeline()
         elif stage not in self.STAGES:
@@ -70,16 +77,22 @@ class IamPipeline:
             eval('self.' + stage)()
 
     def _get_lines(self):
+        """Get the IAM lines to run the recognizer on.
+        """
         self.line_images = [preprocessed(cv.imread(str(file)), self.conf.threshold) for file in
                             tqdm(self.files, desc='Loading line images from disk')]
         self.line_image_data = [SimpleNamespace(name=file.name) for file in self.files]
 
     def _get_test_data(self):
+        """Get the testing data to evaluate recognition performance.
+        """
         fn = self.source_dir / self.TXT_FILE
         text = [line for line in fn.read_text().split('\n') if line != '']
         self.answers = {name: line for name, line in zip(text[0::2], text[1::2])}
 
     def word_segment(self):
+        """Run the word segmentation stage of the pipeline. This stage has no dependencies.
+        """
         segmenter = WordSegmenter(self.conf.segmentation.word[0], self.store_dir / 'word_segmented')
         if segmenter.is_saved_on_disk() and self.load_intermediate:
             self.word_images, self.word_image_data = segmenter.load_from_disk()
@@ -90,6 +103,8 @@ class IamPipeline:
                 segmenter.segment_line_images(self.line_images, self.line_image_data, self.save_intermediate)
 
     def test_word_segment(self):
+        """Evaluate the performance of the word segmentation stage.
+        """
         if self.word_images is None:
             self.word_segment()
         if self.answers is None:
@@ -134,19 +149,26 @@ class IamPipeline:
         fn.write_text('\n'.join(['\t'.join(entry) for entry in incorrects]))
 
     def classify(self):
+        """Run the sliding window classification stage. Depends on the word segmentation stage.
+        """
         if self.word_images is None:
             self.word_segment()
+        self.model = load_model('src/iam/models/best_model')
         classifier = SlidingWindowClassifier(self.model, len(self.characters) + 1, self.word_images,
                                              False, self.conf.classification)
         self.predictions = classifier.classify_all()
 
     def ctc(self):
+        """Run the CTC beam search stage. Depends on the sliding window classification stage.
+        """
         if self.predictions is None:
             self.classify()
         self.words = [beam_search(matrix, ''.join(self.characters), lm=self.iam_language_model)
                       for matrix in tqdm(self.predictions, desc='Decoding probability matrices')]
 
     def write_output(self):
+        """Write the output of the pipeline to files. Depends on the CTC beam search stage.
+        """
         if self.word_image_data is None:
             self.word_segment()
         if self.words is None:

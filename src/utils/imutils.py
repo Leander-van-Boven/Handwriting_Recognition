@@ -32,18 +32,32 @@ def preprocessed(image: np.ndarray, threshold: int, ) -> np.ndarray:
 
 
 def crop(image):
+    """Crop an image to remove the whitespace around the image. Also returns the offset and the width and height of the
+    image.
+    """
     coords = cv.findNonZero(image)
     x, y, w, h = cv.boundingRect(coords)
     return image[y:y+h, x:x+w], (x, y, w, h)
 
 
 def projection_profile(chunk, window_length=20):
+    """Get the projection profile of a chunk of an image.
+
+    :param chunk: The chunk of an image
+    :param window_length: The length of the window to use for the projection profile
+    """
     reduced = cv.reduce(chunk // 255, 1, cv.REDUCE_SUM, dtype=cv.CV_32S).flatten()
     kernel = np.ones(window_length) / window_length
     return np.convolve(reduced, kernel, mode='same')
 
 
 def valleys_from_profile(profile, lookahead, threshold=np.Inf):
+    """Get the valleys from a projection profile.
+
+    :param profile: The projection profile
+    :param lookahead: The lookahead value for the peakdetect algorithm
+    :param threshold: The threshold value for the peakdetect algorithm
+    """
     _, valleys = peakdetect(profile, lookahead=lookahead)
     if len(valleys) == 0:
         return []
@@ -53,6 +67,8 @@ def valleys_from_profile(profile, lookahead, threshold=np.Inf):
 
 
 def consecutive(array):
+    """Get the consecutive elements of an array.
+    """
     return np.split(array, np.where(np.diff(array) != 1)[0] + 1)
 
 

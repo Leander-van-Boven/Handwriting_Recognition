@@ -199,7 +199,14 @@ if __name__ == "__main__":
 
         for i in range(num_models):
             print(f"[INFO] Constructing Model {i}")
-            model = get_model(verbose=i == 0)
+
+            model = get_model(
+                arch=architecture,
+                last_layer_size=dense_size,
+                verbose=i == 0,
+                dropout_rate=dropout_rate)
+            # model = get_model(verbose=i == 0)
+
             compile_model(model, learning_rate)
 
             print("[INFO] Beginning Model Training")
@@ -261,7 +268,7 @@ if __name__ == "__main__":
     print(f"[INFO] Saving Best Model {best_model[2]}")
     best_model[0].save(f'models/best_model_sweep')
 
-    csv = CSVWriter(filename='dss_results',
+    csv = CSVWriter(filename='iam_results',
                     column_names=column_headings,
                     data_values=run_details
                     )
