@@ -13,8 +13,8 @@ from tqdm import tqdm
 from src.iam.model_architecture import get_model, compile_model
 from src.utils.csv_writer import CSVWriter
 
-batch_size = 48
-epochs = 25
+batch_size = 64
+epochs = 20
 num_models = 3
 
 parent_dir = Path('../../data/iam/IMData_Split').resolve()
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    architectures = [val for val in range(1)]
+    architectures = [val for val in range(2)]
     dropout_rates = [0.2, 0.4, 0.6]
     last_dense_layer_sizes = [96, 128, 256]
     learning_rates = [0.001, 0.01, 0.1]
@@ -206,7 +206,7 @@ if __name__ == "__main__":
             # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
             #                                         save_weights_only=True,
             #                                         verbose=1)
-            early_stopping = EarlyStopping(monitor='val_loss', patience=8, verbose=1)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
             # tb = TensorBoard(
             #     log_dir=f'models/train_model{i}_logs',
             #     histogram_freq=1,
@@ -248,10 +248,15 @@ if __name__ == "__main__":
 
             # Only save model if it performs better
             if accuracy > best_model_i[1]:
+                print(f"[INFO] Model i ({i}) performing better than previous best model i ({best_model_i[2]})")
                 best_model_i = (model, accuracy, i)
 
         if best_model_i[1] > best_model[1]:
-            best_model = (*best_model_i, f'{architecture}_{dropout_rate*100}_{dense_size}_{learning_rate*1000}_{best_model_i[2]}')
+            print(
+                f"[INFO] Best model i ({best_model_i[2]}) performing better than previous best model ({best_model[2]})")
+            name = f'{architecture}_{dropout_rate*100}_{dense_size}_{learning_rate*1000}_{best_model_i[2]}'
+            best_model_i[0].save(f'models/best_model_{name}')
+            best_model = (best_model_i[0], best_model_i[1], name)
 
     print(f"[INFO] Saving Best Model {best_model[2]}")
     best_model[0].save(f'models/best_model_sweep')

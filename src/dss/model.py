@@ -14,7 +14,7 @@ from src.dss.model_architecture import get_model, compile_model
 from src.utils.csv_writer import CSVWriter
 
 batch_size = 32
-epochs = 25
+epochs = 20
 num_models = 3
 
 parent_dir = Path('../../data/dss/FINAL_IMAGES_AUGMENTS').resolve()
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    architectures = [val for val in range(1)]
+    architectures = [val for val in range(2)]
     dropout_rates = [0.2, 0.4, 0.6]
     last_dense_layer_sizes = [64, 96, 128]
     learning_rates = [0.001, 0.01, 0.1]
@@ -191,7 +191,7 @@ if __name__ == "__main__":
             compile_model(model, learning_rate)
 
             print("[INFO] Beginning Model Training")
-            early_stopping = EarlyStopping(monitor='val_loss', patience=8, verbose=1)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=1)
             # tb = TensorBoard(
             #     log_dir=f'models/train_model{i}_logs',
             #     histogram_freq=1,
@@ -233,11 +233,11 @@ if __name__ == "__main__":
                 best_model_i = (model, accuracy, i)
 
         if best_model_i[1] > best_model[1]:
-            print(f"[INFO] Best model i ({best_model_i[2]}) performing better than previous best model ({best_model[2]})")
-            best_model = (
-                *best_model_i,
-                f'{architecture}_{dropout_rate * 100}_{dense_size}_{learning_rate*1000}_{best_model_i[2]}'
-            )
+            print(
+                f"[INFO] Best model i ({best_model_i[2]}) performing better than previous best model ({best_model[2]})")
+            name = f'{architecture}_{dropout_rate*100}_{dense_size}_{learning_rate*1000}_{best_model_i[2]}'
+            best_model_i[0].save(f'models/best_model_{name}')
+            best_model = (best_model_i[0], best_model_i[1], name)
 
     print(f"[INFO] Saving Best Model {best_model[2]}")
     best_model[0].save(f'models/best_model_sweep')
