@@ -8,6 +8,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 from tensorflow.python.keras import callbacks
+from tensorflow.python.keras.callbacks import EarlyStopping, TensorBoard
 from tqdm import tqdm
 
 from src.iam.model_architecture import get_model, compile_model
@@ -180,47 +181,73 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    for i in range(num_models):
-        print(f"[INFO] Constructing Model {i}")
-        model = get_model(verbose=i == 0)
-        compile_model(model)
+    architectures = [val for val in range(1)]
+    # big_models = [False, True]
+    # dropout_rates = [0.2, 0.4, 0.6, 0.8]
+    # last_dense_layer_sizes = [64, 96, 128]
+    big_models = [False]
+    dropout_rates = [0.4]
+    last_dense_layer_sizes = [128]
 
-        print("[INFO] Beginning Model Training")
-        # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
-        #                                         save_weights_only=True,
-        #                                         verbose=1)
-        early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-        tb = callbacks.TensorBoard(
-            log_dir=f'models/train_model{i}_logs',
-            histogram_freq=1,
-            write_graph=True,
-            write_images=False,
-            write_steps_per_second=False,
-            update_freq='epoch',
-            profile_batch=0,
-            embeddings_freq=0,
-            embeddings_metadata=None
-        )
-        _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=[early_stopping, tb],
-                      batch_size=batch_size,
-                      validation_data=(validation_data, validation_labels))
-        try:
-            model.save(f'models/trained_model{i}')
-        except:
-            print("[ERROR] Could not save model")
+    best_model = (None, 0, '')
 
-        print("[INFO] Generating Predictions")
-        test_pred_raw = model.predict(test_data)
+    for architecture, use_big_model, dropout_rate, dense_size \
+            in itertools.product(architectures, big_models, dropout_rates, last_dense_layer_sizes):
 
-        test_pred = np.argmax(test_pred_raw, axis=1)
-        rounded_labels = np.argmax(test_labels, axis=1)
-        print("[RESULT] Accuracy: %f" % accuracy_score(rounded_labels, test_pred))
-        precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
-        print(f"[RESULT] Precision: {precision}")
-        print(f"[RESULT] Recall: {recall}")
-        print(f"[RESULT] F-Score: {fscore}")
-        print(f"[RESULT] Support: {support}")
-        # Calculate the confusion matrix using sklearn.metrics
-        cm = confusion_matrix(rounded_labels, test_pred)
-        print(cm)
-        plot_confusion_matrix(cm, class_labels)
+        best_model_i = (None, 0, -1)
+
+        for i in range(num_models):
+            print(f"[INFO] Constructing Model {i}")
+            model = get_model(verbose=i == 0)
+            compile_model(model)
+
+            print("[INFO] Beginning Model Training")
+            # cp_callback = callbacks.ModelCheckpoint(filepath=f'models/trained_model{i}/trained_model.ckpt',
+            #                                         save_weights_only=True,
+            #                                         verbose=1)
+            early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+            # tb = TensorBoard(
+            #     log_dir=f'models/train_model{i}_logs',
+            #     histogram_freq=1,
+            #     write_graph=True,
+            #     write_images=False,
+            #     write_steps_per_second=False,
+            #     update_freq='epoch',
+            #     profile_batch=0,
+            #     embeddings_freq=0,
+            #     embeddings_metadata=None
+            # )
+            cbks = [early_stopping]
+            _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=cbks,
+                          batch_size=batch_size,
+                          validation_data=(validation_data, validation_labels))
+            try:
+                model.save(f'models/trained_model{i}')
+            except:
+                print("[ERROR] Could not save model")
+
+            print("[INFO] Generating Predictions")
+            test_pred_raw = model.predict(test_data)
+
+            test_pred = np.argmax(test_pred_raw, axis=1)
+            rounded_labels = np.argmax(test_labels, axis=1)
+            accuracy = accuracy_score(rounded_labels, test_pred)
+            print(f"[RESULT] Accuracy: {accuracy}")
+            precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
+            print(f"[RESULT] Precision: {precision}")
+            print(f"[RESULT] Recall: {recall}")
+            print(f"[RESULT] F-Score: {fscore}")
+            print(f"[RESULT] Support: {support}")
+            # Calculate the confusion matrix using sklearn.metrics
+            cm = confusion_matrix(rounded_labels, test_pred)
+            plot_confusion_matrix(cm, class_labels)
+
+            # Only save model if it performs better
+            if accuracy > best_model_i[1]:
+                best_model_i = (model, accuracy, i)
+
+        if best_model_i[1] > best_model[1]:
+            best_model = (*best_model_i, f'{architecture}_{use_big_model}_{dropout_rate*100}_{dense_size}_{best_model_i[2]}')
+
+    print(f"[INFO] Saving Best Model {best_model[2]}")
+    best_model[0].save(f'models/best_model_sweep')

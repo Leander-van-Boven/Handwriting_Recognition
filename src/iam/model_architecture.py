@@ -1,6 +1,6 @@
-from tensorflow.python.keras import models, layers, losses, Model, Sequential
+from tensorflow.python.keras import Model, Sequential
 from tensorflow.keras.layers import Dense
-from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Flatten, PReLU
+from tensorflow.python.keras.layers import Conv2D, MaxPooling2D, Flatten, PReLU, Dropout
 from tensorflow.python.keras.losses import CategoricalCrossentropy
 from keras.applications.efficientnet_v2 import EfficientNetV2B3
 
@@ -50,17 +50,36 @@ from keras.applications.efficientnet_v2 import EfficientNetV2B3
 #     return model
 
 
-def get_model(num_classes=63, input_shape=(128, 64, 3), verbose=False):
+def get_model(num_classes=63,
+              input_shape=(128, 64, 3),
+              arch:int = 0,
+              big_model:bool = False,
+              dropout_rate:float = 0.4,
+              last_layer_size:int = 96,
+              activation_function:callable = PReLU,
+              verbose=False):
     model = Sequential()
 
-    model.add(Conv2D(32, 3, input_shape=input_shape))
-    model.add(MaxPooling2D(2, 2))
-    model.add(Conv2D(64, 3))
-    model.add(MaxPooling2D(2, 2))
-    model.add(Flatten(input_shape=(28, 28, 1)))
-    model.add(Dense(128, activation=PReLU()))
-    # model.add(Dense(64, activation=PReLU()))
-    model.add(Dense(num_classes, activation='softmax'))
+    if arch == 0:
+        model.add(Conv2D(filters=32, kernel_size=3, input_shape=input_shape))
+        model.add(activation_function())
+        model.add(Dropout(dropout_rate))
+        model.add(MaxPooling2D(2, 2))
+        model.add(Conv2D(filters=64, kernel_size=3))
+        model.add(activation_function())
+        model.add(Dropout(dropout_rate))
+        model.add(MaxPooling2D(2, 2))
+        model.add(Flatten())
+        model.add(Dense(last_layer_size))
+        model.add(activation_function())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(num_classes, activation='softmax'))
+
+    elif arch == 1:
+        # create different architecture
+        pass
+
+    # create more archs...
 
     if verbose:
         print(model.summary())

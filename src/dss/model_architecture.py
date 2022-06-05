@@ -30,36 +30,44 @@ def get_model(num_classes=28,
               input_shape=(71, 40, 1),
               arch:int = 0,
               big_model:bool = False,
-              dropout_rate:float = 0.5,
+              dropout_rate:float = 0.4,
               last_layer_size:int = 96,
-              activation_function = PReLU(),
+              activation_function:callable = PReLU,
               verbose: bool = False):
     model = Sequential()
 
     if arch == 0:
-        model.add(Conv2D(filters=32, kernel_size=2, activation=activation_function, input_shape=input_shape))
+        model.add(Conv2D(filters=32, kernel_size=2, input_shape=input_shape))
+        model.add(activation_function())
         model.add(BatchNormalization())
         if big_model:
-            model.add(Conv2D(filters=32, kernel_size=3, activation=activation_function))
+            model.add(Conv2D(filters=32, kernel_size=3))
+            model.add(activation_function())
             model.add(BatchNormalization())
-            model.add(Conv2D(filters=32, kernel_size=5, strides=2, padding='same', activation=activation_function))
+            model.add(Conv2D(filters=32, kernel_size=5, strides=2, padding='same'))
+            model.add(activation_function())
             model.add(BatchNormalization())
         model.add(Dropout(dropout_rate))
 
-        model.add(Conv2D(filters=64, kernel_size=2, activation=activation_function))
+        model.add(Conv2D(filters=64, kernel_size=2))
+        model.add(activation_function())
         model.add(BatchNormalization())
         if big_model:
-            model.add(Conv2D(filters=64, kernel_size=3, activation=activation_function))
+            model.add(Conv2D(filters=64, kernel_size=3))
+            model.add(activation_function())
             model.add(BatchNormalization())
-            model.add(Conv2D(filters=64, kernel_size=5, strides=2, padding='same', activation=activation_function))
+            model.add(Conv2D(filters=64, kernel_size=5, strides=2, padding='same'))
+            model.add(activation_function())
             model.add(BatchNormalization())
         model.add(Dropout(dropout_rate))
 
-        model.add(Conv2D(filters=128, kernel_size=3, activation=activation_function))
+        model.add(Conv2D(filters=128, kernel_size=3))
+        model.add(activation_function())
         model.add(BatchNormalization())
         model.add(Flatten())
         model.add(Dropout(dropout_rate))
-        model.add(Dense(last_layer_size, activation=activation_function))
+        model.add(Dense(last_layer_size))
+        model.add(activation_function())
         model.add(Dropout(dropout_rate))
         model.add(Dense(num_classes, activation='softmax'))
 

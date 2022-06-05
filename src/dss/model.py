@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 from tensorflow.python.keras import callbacks
 import os
 import PIL
+from tensorflow.python.keras.callbacks import EarlyStopping
+from tensorflow.python.keras.callbacks_v1 import TensorBoard
 from tqdm import tqdm
 import numpy as np
 
@@ -165,12 +167,20 @@ if __name__ == "__main__":
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
     architectures = [val for val in range(1)]
-    big_models = [False, True]
-    dropout_rates = [0.2, 0.4, 0.6, 0.8]
-    last_dense_layer_sizes = [64, 96, 128]
+    # big_models = [False, True]
+    # dropout_rates = [0.2, 0.4, 0.6, 0.8]
+    # last_dense_layer_sizes = [64, 96, 128]
+    big_models = [True]
+    dropout_rates = [0.4]
+    last_dense_layer_sizes = [96]
+
+    best_model = (None, 0, '')
 
     for architecture, use_big_model, dropout_rate, dense_size \
             in itertools.product(architectures, big_models, dropout_rates, last_dense_layer_sizes):
+
+        best_model_i = (None, 0, -1)
+
         for i in range(num_models):
             print(f"[INFO] Constructing Model {i}")
             model = get_model(
@@ -181,8 +191,8 @@ if __name__ == "__main__":
             compile_model(model)
 
             print("[INFO] Beginning Model Training")
-            early_stopping = callbacks.EarlyStopping(monitor='val_loss', patience=10, verbose=1)
-            # tb = callbacks.TensorBoard(
+            early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+            # tb = TensorBoard(
             #     log_dir=f'models/train_model{i}_logs',
             #     histogram_freq=1,
             #     write_graph=True,
@@ -193,8 +203,8 @@ if __name__ == "__main__":
             #     embeddings_freq=0,
             #     embeddings_metadata=None
             # )
-            callbacks = [early_stopping]
-            _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=callbacks,
+            cbks = [early_stopping]
+            _ = model.fit(train_data, train_labels, epochs=epochs, callbacks=cbks,
                           batch_size=batch_size,
                           validation_data=(validation_data, validation_labels))
 
@@ -203,7 +213,8 @@ if __name__ == "__main__":
 
             test_pred = np.argmax(test_pred_raw, axis=1)
             rounded_labels = np.argmax(test_labels, axis=1)
-            print("[RESULT] Accuracy: %f" % accuracy_score(rounded_labels, test_pred))
+            accuracy = accuracy_score(rounded_labels, test_pred)
+            print(f"[RESULT] Accuracy: {accuracy}")
             precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
             print(f"[RESULT] Precision: {precision}")
             print(f"[RESULT] Recall: {recall}")
@@ -214,4 +225,16 @@ if __name__ == "__main__":
             plot_confusion_matrix(cm, class_labels)
 
             # Only save model if it performs better
-            model.save(f'models/trained_model{i}')
+            if accuracy > best_model_i[1]:
+                print(f"[INFO] Model i ({i}) performing better than previous best model i ({best_model_i[2]})")
+                best_model_i = (model, accuracy, i)
+
+        if best_model_i[1] > best_model[1]:
+            print(f"[INFO] Best model i ({best_model_i[2]}) performing better than previous best model ({best_model[2]})")
+            best_model = (
+                *best_model_i,
+                f'{architecture}_{use_big_model}_{dropout_rate * 100}_{dense_size}_{best_model_i[2]}'
+            )
+
+        print(f"[INFO] Saving Best Model {best_model[2]}")
+        best_model[0].save(f'models/best_model_sweep')
