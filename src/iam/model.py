@@ -11,6 +11,7 @@ from tensorflow.python.keras import callbacks
 from tqdm import tqdm
 
 from src.iam.model_architecture import get_model, compile_model
+from src.utils.csv_writer import CSVWriter
 
 batch_size = 32
 epochs = 25

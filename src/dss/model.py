@@ -10,6 +10,7 @@ from tqdm import tqdm
 import numpy as np
 
 from src.dss.model_architecture import get_model, compile_model
+from src.utils.csv_writer import CSVWriter
 
 batch_size = 16
 epochs = 25
@@ -169,6 +170,10 @@ if __name__ == "__main__":
     dropout_rates = [0.2, 0.4, 0.6, 0.8]
     last_dense_layer_sizes = [64, 96, 128]
 
+    column_headings = ['Architecture', 'Big Model', 'Dropout Rate', 'Last Dense Layer Size',
+                       'Accuracy', 'Precision', 'Recall', 'F Score', 'Support']
+    run_details = []
+
     for architecture, use_big_model, dropout_rate, dense_size \
             in itertools.product(architectures, big_models, dropout_rates, last_dense_layer_sizes):
         for i in range(num_models):
@@ -203,7 +208,8 @@ if __name__ == "__main__":
 
             test_pred = np.argmax(test_pred_raw, axis=1)
             rounded_labels = np.argmax(test_labels, axis=1)
-            print("[RESULT] Accuracy: %f" % accuracy_score(rounded_labels, test_pred))
+            accuracy = accuracy_score(rounded_labels, test_pred)
+            print("[RESULT] Accuracy: %f" % accuracy)
             precision, recall, fscore, support = precision_recall_fscore_support(rounded_labels, test_pred)
             print(f"[RESULT] Precision: {precision}")
             print(f"[RESULT] Recall: {recall}")
@@ -213,5 +219,14 @@ if __name__ == "__main__":
             cm = confusion_matrix(rounded_labels, test_pred)
             plot_confusion_matrix(cm, class_labels)
 
+            run_details.append([architecture, use_big_model, dropout_rate, dense_size,
+                               accuracy, precision, recall, fscore, support])
+
             # Only save model if it performs better
             model.save(f'models/trained_model{i}')
+
+    csv = CSVWriter(filename='dss_results',
+                    column_names=column_headings,
+                    data_values=run_details
+                    )
+    csv.create_csv_file()
