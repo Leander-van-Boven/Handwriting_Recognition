@@ -51,3 +51,30 @@ optional arguments:
 Note that the IAM task has identical command-line arguments, just with different defaults and with different available 
 stages. By default, running `python3 main.py dss` or `python3 main.py iam` will let the full pipeline run on the full 
 DSS or respectively IAM dataset, without saving or loading intermediate steps.
+## Running individual Intermediary steps
+Note the outputs of these intermediary steps already exist in the repository
+### DSS
+To create the augmented data set run: 
+```shell
+$ py src/dss/data_augmentation.py
+```
+This will create data/dss/FINAL_IMAGE_AUGMENTS, containing a train/test/validation split of the augmented data.
+To create the trained CNN run:
+```shell
+$ py src/dss/model.py
+```
+The created model will be saved in src/dss/models. To run the recognizer with this created CNN, replace the files in models/best_model
+with the new files created and run as decribed above.
+
+### IAM
+To run the image preprocessing run: 
+```shell
+$ py src/dss/data_augmentation.py
+```
+This creates an extra "blank" (i.e. not a character) character class within IMData_Split.
+To create the trained CNN run:
+```shell
+$ py src/iam/model.py
+```
+The created model will be saved in src/iam/models. To run the recognizer with this created CNN, replace the files in models/best_model
+with the new files created and run as decribed above.
