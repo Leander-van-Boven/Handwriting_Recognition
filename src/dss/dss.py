@@ -93,8 +93,7 @@ class DssPipeline:
     def line_segment(self):
         if self.scrolls is None:
             self._get_scrolls()
-        segmenter = LineSegmenter(self.conf.segmentation.line[1],
-                                  self.store_dir / 'line_segmented')
+        segmenter = LineSegmenter(self.conf.segmentation.line[1], self.store_dir / 'line_segmented')
         self.line_images, self.line_image_data = segmenter.segment_scrolls(self.scrolls, self.scroll_names,
                                                                            self.save_intermediate)
 
