@@ -71,10 +71,70 @@ def get_model(num_classes=28,
         model.add(Dense(num_classes, activation='softmax'))
 
     elif arch == 1:
-        # create different architecture
-        pass
+        model.add(Conv2D(filters=48, kernel_size=2, input_shape=input_shape, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=48, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=48, kernel_size=5, strides=2, padding='same', kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
 
-    # create more archs...
+        model.add(Conv2D(filters=96, kernel_size=2, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=96, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=96, kernel_size=5, strides=2, padding='same', kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
+
+        model.add(Conv2D(filters=192, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Flatten())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(last_layer_size, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(num_classes, activation='softmax'))
+
+    elif arch == 2:
+        model.add(Conv2D(filters=64, kernel_size=2, input_shape=input_shape, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=64, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=64, kernel_size=5, strides=2, padding='same', kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
+
+        model.add(Conv2D(filters=128, kernel_size=2, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=128, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Conv2D(filters=128, kernel_size=5, strides=2, padding='same', kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Dropout(dropout_rate))
+
+        model.add(Conv2D(filters=256, kernel_size=3, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(BatchNormalization())
+        model.add(Flatten())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(last_layer_size, kernel_constraint=maxnorm(3)))
+        model.add(activation_function())
+        model.add(Dropout(dropout_rate))
+        model.add(Dense(num_classes, activation='softmax'))
 
     if verbose:
         print(model.summary())
@@ -85,12 +145,12 @@ def get_model(num_classes=28,
 def compile_model(model, learning_rate=0.001):
     adam = Adam(learning_rate=learning_rate)
     model.compile(
-        optimizer='adam',
+        optimizer=adam,
         loss=CategoricalCrossentropy(),  # from_logits=True, disabled because of Softmax
         metrics=['accuracy']
     )
 
 
 if __name__ == '__main__':
-    model = get_model(verbose=True)
+    model = get_model(verbose=True, arch=2)
     # compile_model(model)
