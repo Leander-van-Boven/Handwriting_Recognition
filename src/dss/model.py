@@ -166,7 +166,7 @@ if __name__ == "__main__":
     test_data, test_labels = shuffle_data(test_data, test_labels)
     validation_data, validation_labels = shuffle_data(validation_data, validation_labels)
 
-    architectures = [val for val in range(1)]
+    architectures = [val for val in range(2)]
     dropout_rates = [0.2, 0.4, 0.6]
     last_dense_layer_sizes = [64, 96, 128]
     learning_rates = [0.001, 0.01, 0.1]

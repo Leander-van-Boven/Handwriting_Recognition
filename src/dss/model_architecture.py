@@ -145,7 +145,7 @@ def get_model(num_classes=28,
 def compile_model(model, learning_rate=0.001):
     adam = Adam(learning_rate=learning_rate)
     model.compile(
-        optimizer='adam',
+        optimizer=adam,
         loss=CategoricalCrossentropy(),  # from_logits=True, disabled because of Softmax
         metrics=['accuracy']
     )
