@@ -15,8 +15,7 @@ def get_model(num_classes=28,
               last_layer_size:int = 96,
               activation_function:callable = PReLU,
               verbose: bool = False):
-    """
-    Returns a keras model with the specified architecture.
+    """Returns a keras model with the specified architecture.
     :param num_classes: number of classes
     :param input_shape: input shape
     :param arch: architecture number

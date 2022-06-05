@@ -27,8 +27,7 @@ VALIDATION_PATH = os.path.join(parent_dir, 'Validation')
 
 
 def read_in_data():
-    """
-    Reads in the data from the directories and returns the data and labels.
+    """Reads in the data from the directories and returns the data and labels.
     :return: train_ds, train_labels, test_ds, test_labels, validation_ds, validation_labels, class_names
     """
 
@@ -110,8 +109,7 @@ def read_in_data():
 
 
 def shuffle_data(train_ds, train_labels):
-    """
-    Shuffles the data and labels
+    """Shuffles the data and labels
     :param train_ds: training data
     :param train_labels: training labels
     :return: shuffled data and labels
@@ -124,8 +122,7 @@ def shuffle_data(train_ds, train_labels):
 # adapted from
 # https://towardsdatascience.com/exploring-confusion-matrix-evolution-on-tensorboard-e66b39f4ac12
 def plot_confusion_matrix(cm, class_names):
-    """
-    Returns a matplotlib figure containing the plotted confusion matrix.
+    """Returns a matplotlib figure containing the plotted confusion matrix.
 
     Args:
        cm (array, shape = [n, n]): a confusion matrix of integer classes

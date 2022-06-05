@@ -8,10 +8,9 @@ from PIL import Image, ImageOps
 import cv2
 import numpy as np
 from tqdm import tqdm
-from skimage.morphology import skeletonize, thin
+from skimage.morphology import thin
 from skimage.util import invert
 from skimage import img_as_ubyte
-import matplotlib.pyplot as plt
 
 from src.dss.model import num_images
 
@@ -212,7 +211,7 @@ def augment(max_height, max_width):
         except OSError as error:
             pass
 
-        ENUMERATOR = 0
+        enumerator = 0
         for character_data in os.listdir(f):
             # Image Files
             file = os.path.join(f, character_data)
@@ -223,16 +222,16 @@ def augment(max_height, max_width):
             # image, then arrays
             for i in range(len(tuple)):
                 if i == 0:
-                    image_name = character_name + "_" + str(ENUMERATOR) + "_" + str(i) + SAVE_EXTENSION
+                    image_name = character_name + "_" + str(enumerator) + "_" + str(i) + SAVE_EXTENSION
                     new_image_path = os.path.join(new_path, image_name)
                     cv2.imwrite(new_image_path, tuple[i])
                 else:
                     for j in range(NUM_SPECIAL_AUGMENTS):
-                        image_name = character_name + "_" + str(ENUMERATOR) + "_" + str(i) + "_" + str(j) + SAVE_EXTENSION
+                        image_name = character_name + "_" + str(enumerator) + "_" + str(i) + "_" + str(j) + SAVE_EXTENSION
                         new_image_path = os.path.join(new_path, image_name)
                         cv2.imwrite(new_image_path, tuple[i][j])
 
-            ENUMERATOR += 1
+            enumerator += 1
 
 
 def crop_images():
@@ -500,30 +499,34 @@ def train_test_validation(use_augmented=False, no_validation=False, train_percen
         TRAIN = "train"
         VALIDATION = "validation"
 
-        ENUMERATOR = 0
+        enumerator = 0
         for img in test_subset:
-            file_name = letter_name + "_" + TEST + "_" + str(ENUMERATOR) + SAVE_EXTENSION
+            file_name = letter_name + "_" + TEST + "_" + str(enumerator) + SAVE_EXTENSION
             path = os.path.join(parent_dir, "Test", letter_name, file_name)
             cv2.imwrite(path, img)
-            ENUMERATOR += 1
+            enumerator += 1
 
         if not no_validation:
-            ENUMERATOR = 0
+            enumerator = 0
             for img in validation_subset:
-                file_name = letter_name + "_" + VALIDATION + "_" + str(ENUMERATOR) + SAVE_EXTENSION
+                file_name = letter_name + "_" + VALIDATION + "_" + str(enumerator) + SAVE_EXTENSION
                 path = os.path.join(parent_dir, "Validation", letter_name, file_name)
                 cv2.imwrite(path, img)
-                ENUMERATOR += 1
+                enumerator += 1
 
-        ENUMERATOR = 0
+        enumerator = 0
         for img in train_subset:
-            file_name = letter_name + "_" + TRAIN + "_" + str(ENUMERATOR) + SAVE_EXTENSION
+            file_name = letter_name + "_" + TRAIN + "_" + str(enumerator) + SAVE_EXTENSION
             path = os.path.join(parent_dir, "Train", letter_name, file_name)
             cv2.imwrite(path, img)
-            ENUMERATOR += 1
+            enumerator += 1
 
 
 def create_blank_images():
+    """Creates images for the CTC 'blank' character, and writes them to the 'ZBlank' folder in the
+    Train, Validation, and Test folders.
+    """
+
     # Load n-grams for probabilities
     with open(Path('ngrams/ngrams_processed.json').resolve(), 'r') as f:
         ngrams = json.load(f)

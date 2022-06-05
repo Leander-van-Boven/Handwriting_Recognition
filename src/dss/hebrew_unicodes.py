@@ -34,8 +34,17 @@ class HebrewUnicodes:
 
     @classmethod
     def characters(cls):
+        """
+        Returns the list of Hebrew characters.
+        :return: The list of Hebrew characters.
+        """
         return list(cls.CHARS.values())
 
     @classmethod
     def name_to_unicode(cls, name: str):
+        """
+        Returns the unicode for the given Hebrew character name.
+        :param name: The name of the Hebrew character.
+        :return: The unicode for the given Hebrew character name.
+        """
         return cls.CHARS[name.replace('-', '_').upper()]
