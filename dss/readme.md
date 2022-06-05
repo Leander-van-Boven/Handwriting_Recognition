@@ -1,3 +1,4 @@
+[Root](../README.md) &rarr; [DSS](./readme.md)
 # Handwriting Recognition 2022 Tasks 1 & 2: Dead Sea Scrolls
 ## How to run
 We assume a Linux-environment, with python 3.8 installed. You may need to add execution privileges for the shell
