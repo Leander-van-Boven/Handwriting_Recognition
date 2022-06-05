@@ -1,4 +1,7 @@
 class HebrewUnicodes:
+    """
+    This class contains the unicodes for Hebrew characters.
+    """
     CHARS = {
         'ALEF': '\u05D0',
         'AYIN': '\u05e2',

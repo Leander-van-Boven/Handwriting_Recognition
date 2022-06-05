@@ -563,14 +563,13 @@ def create_blank_images():
 
 if __name__ == '__main__':
     print("[INFO] Performing Data Augmentation\n===========================================")
-    # threshold()
-    # crop_images()
-    # max_height, max_width = determine_largest_size()
-    # augment(max_height=max_height, max_width=max_width)
-    # train_test_validation(use_augmented=True,
-    #                       no_validation=False,
-    #                       train_percent=0.8,
-    #                       test_percent=0.1,
-    #                       validation_percent=0.1,
-    #                       parent_dir="FINAL_IMAGES_AUGMENTS")
+    threshold()
+    crop_images()
+    max_height, max_width = determine_largest_size()
+    augment(max_height=max_height, max_width=max_width)
+    train_test_validation(use_augmented=True,
+                          no_validation=False,
+                          train_percent=0.8,
+                          test_percent=0.1,
+                          validation_percent=0.1)
     create_blank_images()
